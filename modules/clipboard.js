@@ -109,17 +109,19 @@ class Clipboard extends Module {
     if (e.defaultPrevented || !this.quill.isEnabled()) return;
     let range = this.quill.getSelection();
     let delta = new Delta().retain(range.index);
-    let scrollTop = this.quill.scrollingContainer.scrollTop;
+    this.scrollY = window.scrollY;
     this.container.focus();
+    window.scrollTo(0, this.scrollY);
     this.quill.selection.update(Quill.sources.SILENT);
     setTimeout(() => {
       delta = delta.concat(this.convert()).delete(range.length);
       this.quill.updateContents(delta, Quill.sources.USER);
       // range.length contributes to delta.length()
       this.quill.setSelection(delta.length() - range.length, Quill.sources.SILENT);
-      this.quill.scrollingContainer.scrollTop = scrollTop;
+      window.scrollTo(0, this.scrollY);
+      this.scrollY = null;
       this.quill.focus();
-    }, 1);
+    });
   }
 
   prepareMatching() {
