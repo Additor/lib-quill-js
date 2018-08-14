@@ -3,7 +3,7 @@ import equal from 'deep-equal';
 import extend from 'extend';
 import Delta from 'quill-delta';
 import DeltaOp from 'quill-delta/lib/op';
-import { EmbedBlot, Scope, TextBlot } from 'parchment';
+import { EmbedBlot, TextBlot } from 'parchment';
 import Quill from '../core/quill';
 import logger from '../core/logger';
 import Module from '../core/module';
@@ -305,7 +305,18 @@ Keyboard.DEFAULTS = {
       format: ['table'],
       collapsed: true,
       offset: 0,
-      handler() {},
+      handler(range) {
+        const [line, offset] = this.quill.getLine(range.index - 1);
+        if (line.statics.blotName === 'table') {
+          this.quill.setSelection(range.index - 1, 0, Quill.sources.USER);
+          return false;
+        }
+        if (offset > 0) {
+          this.quill.setSelection(range.index - 1, 0, Quill.sources.USER);
+        } else {
+          line.remove();
+        }
+      },
     },
     'table delete': {
       key: 'Delete',
@@ -415,7 +426,7 @@ Keyboard.DEFAULTS = {
           cur != null &&
           cur.length() <= 1 &&
           cur.formats()['code-block']
-        ) {
+          ) {
           cur = cur.prev;
           numLines -= 1;
           // Requisite prev lines are empty
@@ -517,26 +528,12 @@ function handleEnter(range, context) {
   if (range.length > 0) {
     this.quill.scroll.deleteAt(range.index, range.length); // So we do not trigger text-change
   }
-  const lineFormats = Object.keys(context.format).reduce((formats, format) => {
-    if (
-      this.quill.scroll.query(format, Scope.BLOCK) &&
-      !Array.isArray(context.format[format])
-    ) {
-      formats[format] = context.format[format];
-    }
-    return formats;
-  }, {});
-  this.quill.insertText(range.index, '\n', lineFormats, Quill.sources.USER);
+  if (window.gComposing) return;
+  this.quill.insertText(range.index, '\n', {}, Quill.sources.USER);
   // Earlier scroll.deleteAt might have messed up our selection,
   // so insertText's built in selection preservation is not reliable
   this.quill.setSelection(range.index + 1, Quill.sources.SILENT);
   this.quill.focus();
-  Object.keys(context.format).forEach(name => {
-    if (lineFormats[name] != null) return;
-    if (Array.isArray(context.format[name])) return;
-    if (name === 'link') return;
-    this.quill.format(name, context.format[name], Quill.sources.USER);
-  });
 }
 
 function makeCodeBlockHandler(indent) {

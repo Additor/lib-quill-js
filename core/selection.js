@@ -66,11 +66,24 @@ class Selection {
   }
 
   handleComposition() {
+    this.root.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter') window.gComposing = false;
+      else {
+        setTimeout(() => {
+          window.gComposing = false;
+        });
+      }
+    });
     this.root.addEventListener('compositionstart', () => {
       this.composing = true;
+      window.gComposing = true;
+    });
+    this.root.addEventListener('compositionupdate', () => {
+      window.gComposing = true;
     });
     this.root.addEventListener('compositionend', () => {
       this.composing = false;
+      window.gComposing = false;
       if (this.cursor.parent) {
         const range = this.cursor.restore();
         if (!range) return;
