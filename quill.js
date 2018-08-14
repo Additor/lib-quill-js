@@ -17,6 +17,9 @@ import { ColorClass, ColorStyle } from './formats/color';
 import { FontClass, FontStyle } from './formats/font';
 import { SizeClass, SizeStyle } from './formats/size';
 
+import AdditorEmbed from './formats/additor.embed';
+import AdditorInlineComment from './formats/additor.comment';
+
 import Bold from './formats/bold';
 import Italic from './formats/italic';
 import Link from './formats/link';
@@ -91,6 +94,9 @@ Quill.register(
     'formats/formula': Formula,
     'formats/image': Image,
     'formats/video': Video,
+
+    'formats/embed': AdditorEmbed,
+    'formats/inline-comment': AdditorInlineComment,
 
     'modules/syntax': Syntax,
     'modules/table': Table,
