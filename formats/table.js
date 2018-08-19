@@ -40,7 +40,7 @@ class TableCell extends Block {
       if (value['data-row']) {
         node.setAttribute('data-row', value['data-row']);
       } else {
-        node.setAttribute('data-row', tableId());
+        node.setAttribute('data-row', rowId());
       }
 
       if (value.width) {
@@ -95,14 +95,6 @@ class TableCell extends Block {
 
   table() {
     return this.row() && this.row().table();
-  }
-
-  setWidth(width) {
-    this.format('width', width);
-  }
-
-  getWidth() {
-    return this.domNode.getBoundingClientRect().width;
   }
 }
 TableCell.blotName = 'table';
@@ -209,7 +201,7 @@ class TableContainer extends Container {
   insertRow(index) {
     const [body] = this.descendant(TableBody);
     if (body == null || body.children.head == null) return;
-    const id = tableId();
+    const id = rowId();
     const row = this.scroll.create(TableRow.blotName);
     body.children.head.children.forEach(() => {
       const cell = this.scroll.create(TableCell.blotName, id);
@@ -228,13 +220,103 @@ class TableContainer extends Container {
 TableContainer.blotName = 'table-container';
 TableContainer.tagName = 'TABLE';
 
-// class ScrollableTableContainer extends Container {}
-// ScrollableTableContainer.blotName = 'scrollable-table-container';
-// ScrollableTableContainer.className = 'scrollable-table-container';
-// ScrollableTableContainer.tagName = 'DIV';
-//
-// ScrollableTableContainer.allowedChildren = [TableContainer];
-// TableContainer.requiredContainer = ScrollableTableContainer;
+class ScrollableTableContainer extends Container {
+  constructor(scroll, domNode) {
+    super(scroll, domNode);
+
+    const scrollShadowLeft = document.createElement('div');
+    const scrollShadowRight = document.createElement('div');
+    scrollShadowLeft.className = 'scroll-shadow scroll-shadow-left';
+    scrollShadowRight.className = 'scroll-shadow scroll-shadow-right';
+    domNode.appendChild(scrollShadowLeft);
+    domNode.appendChild(scrollShadowRight);
+
+    domNode.addEventListener('scroll', ev =>
+      this.setScrollShadowWidth(ev.target),
+    );
+
+
+    const customScrollBar = document.createElement('div');
+    const customScrollThumb = document.createElement('div');
+    const scrollPageLeft = document.createElement('div');
+    const scrollPageRight = document.createElement('div');
+
+    customScrollBar.appendChild(scrollPageLeft);
+    customScrollBar.appendChild(scrollPageRight);
+    customScrollBar.appendChild(customScrollThumb);
+
+    domNode.appendChild(customScrollBar);
+
+    this.scrollShadowLeft = scrollShadowLeft;
+    this.scrollShadowRight = scrollShadowRight;
+    _.defer(() => this.setScrollShadowWidth(this.domNode));
+  }
+
+  setScrollShadowWidth(domNode) {
+    const leftShadowWidth = domNode.scrollLeft > 8 ? 8 : domNode.scrollLeft;
+    const scrollRight =
+      domNode.scrollWidth - (domNode.scrollLeft + domNode.clientWidth);
+    const rightShadowWidth = scrollRight > 8 ? 8 : scrollRight;
+
+    this.scrollShadowLeft.style.width = `${leftShadowWidth}px`;
+    this.scrollShadowRight.style.width = `${rightShadowWidth}px`;
+  }
+}
+
+ScrollableTableContainer.blotName = 'scrollable-table-container';
+ScrollableTableContainer.className = 'scrollable-table-container';
+ScrollableTableContainer.tagName = 'DIV';
+
+class TableWrapper extends Container {
+  constructor(scroll, domNode) {
+    super(scroll, domNode);
+    domNode.id = tableId();
+  }
+
+  checkMerge() {
+    if (super.checkMerge()) {
+      if (this.statics.blotName !== this.next.statics.blotName) {
+        return false;
+      }
+      return true;
+    }
+    return false;
+  }
+
+  // static create(value) {
+  //   const node = super.create();
+  //   if (value) {
+  //     node.setAttribute('data-row', value);
+  //   } else {
+  //     node.setAttribute('data-row', tableId());
+  //   }
+  //   return node;
+  // }
+  //
+  // static formats(domNode) {
+  //   if (domNode.hasAttribute('data-row')) {
+  //     return domNode.getAttribute('data-row');
+  //   }
+  //   return undefined;
+  // }
+  //
+  // format(name, value) {
+  //   if (name === TableWrapper.blotName && value) {
+  //     this.domNode.setAttribute('data-row', value);
+  //   } else {
+  //     super.format(name, value);
+  //   }
+  // }
+}
+TableWrapper.blotName = 'table-wrapper';
+TableWrapper.className = 'table-wrapper';
+TableWrapper.tagName = 'DIV';
+
+TableWrapper.allowedChildren = [ScrollableTableContainer];
+ScrollableTableContainer.requiredContainer = TableWrapper;
+
+ScrollableTableContainer.allowedChildren = [TableContainer];
+TableContainer.requiredContainer = ScrollableTableContainer;
 
 TableContainer.allowedChildren = [TableBody];
 TableBody.requiredContainer = TableContainer;
@@ -245,11 +327,18 @@ TableRow.requiredContainer = TableBody;
 TableRow.allowedChildren = [TableCell];
 TableCell.requiredContainer = TableRow;
 
-function tableId() {
+function rowId() {
   const id = Math.random()
     .toString(36)
     .slice(2, 6);
   return `row-${id}`;
 }
 
-export { TableCell, TableRow, TableBody, TableContainer, tableId };
+function tableId() {
+  const id = Math.random()
+    .toString(36)
+    .slice(2, 6);
+  return `table-${id}`;
+}
+
+export { TableCell, TableRow, TableBody, TableContainer, ScrollableTableContainer, TableWrapper, rowId };
