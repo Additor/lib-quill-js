@@ -308,7 +308,6 @@ Keyboard.DEFAULTS = {
       handler(range) {
         const [line, offset] = this.quill.getLine(range.index - 1);
         if (line.statics.blotName === 'table') {
-          this.quill.setSelection(range.index - 1, 0, Quill.sources.USER);
           return false;
         }
         if (offset > 0) {
@@ -335,7 +334,7 @@ Keyboard.DEFAULTS = {
           const [table, row, cell, offset] = module.getTable(range);
           const shift = tableSide(table, row, cell, offset);
           if (shift == null) return;
-          let index = table.offset();
+          let index = table.parent.parent.offset();
           if (shift < 0) {
             const delta = new Delta().retain(index).insert('\n');
             this.quill.updateContents(delta, Quill.sources.USER);
@@ -346,7 +345,7 @@ Keyboard.DEFAULTS = {
             );
           } else if (shift > 0) {
             index += table.length();
-            const delta = new Delta().retain(index).insert('\n');
+            const delta = new Delta().retain(index + 1).insert('\n');
             this.quill.updateContents(delta, Quill.sources.USER);
             this.quill.setSelection(index, Quill.sources.USER);
           }
@@ -646,7 +645,7 @@ function makeTableArrowHandler(up) {
           this.quill.setSelection(index, 0, Quill.sources.USER);
         }
       } else {
-        const targetLine = cell.table()[key];
+        const targetLine = cell.table().parent[key];
         if (targetLine != null) {
           if (up) {
             this.quill.setSelection(

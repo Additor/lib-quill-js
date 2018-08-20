@@ -7,6 +7,7 @@ import {
   Scope,
   StyleAttributor,
 } from 'parchment';
+import _ from 'lodash';
 import Quill from '../core/quill';
 import logger from '../core/logger';
 import Module from '../core/module';
@@ -18,6 +19,7 @@ import { ColorStyle } from '../formats/color';
 import { DirectionAttribute, DirectionStyle } from '../formats/direction';
 import { FontStyle } from '../formats/font';
 import { SizeStyle } from '../formats/size';
+import { rowId, tableId } from '../formats/table';
 
 const debug = logger('quill:clipboard');
 
@@ -88,6 +90,21 @@ class Clipboard extends Module {
       html.replace(/>\r?\n +</g, '><'), // Remove spaces between tags
       'text/html',
     );
+
+    const tableNodes = doc.getElementsByTagName('TABLE');
+    if (!_.isEmpty(tableNodes)) {
+      const dataTable = tableId();
+      _.forEach(tableNodes, tableNode => {
+        _.forEach(tableNode.rows, row => {
+          const dataRow = rowId();
+          _.forEach(row.cells, cell => {
+            cell.setAttribute('data-row', dataRow);
+            cell.setAttribute('data-table', dataTable);
+          });
+        });
+      });
+    }
+
     const container = doc.body;
     const nodeMatches = new WeakMap();
     const [elementMatchers, textMatchers] = this.prepareMatching(
@@ -164,10 +181,18 @@ class Clipboard extends Module {
     const formats = this.quill.getFormat(range.index);
     const pastedDelta = this.convert({ text, html }, formats);
     debug.log('onPaste', pastedDelta, { text, html });
-    const delta = new Delta()
-      .retain(range.index)
-      .delete(range.length)
-      .concat(pastedDelta);
+    let delta;
+    if (formats.table) {
+      delta = new Delta()
+        .retain(range.index)
+        .delete(range.length)
+        .insert((text || '').replace(/(\r\n\t|\n|\r\t)/gm, '')); // 표 내부에서는 공백을 제거하여 붙여넣는다.
+    } else {
+      delta = new Delta()
+        .retain(range.index)
+        .delete(range.length)
+        .concat(pastedDelta);
+    }
     this.quill.updateContents(delta, Quill.sources.USER);
     // range.length contributes to delta.length()
     this.quill.setSelection(

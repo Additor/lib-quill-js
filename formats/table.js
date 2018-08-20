@@ -2,7 +2,7 @@ import Block from '../blots/block';
 import Container from '../blots/container';
 import _ from 'lodash';
 
-const CELL_STYLE_ATTRIBUTES = ['data-row', 'width'];
+const CELL_STYLE_ATTRIBUTES = ['data-row', 'data-table', 'width'];
 class TableCell extends Block {
   constructor(scroll, domNode) {
     super(scroll, domNode);
@@ -43,6 +43,12 @@ class TableCell extends Block {
         node.setAttribute('data-row', rowId());
       }
 
+      if (value['data-table']) {
+        node.setAttribute('data-table', value['data-table']);
+      } else {
+        node.setAttribute('data-table', tableId());
+      }
+
       if (value.width) {
         node.style.width = value.width;
       }
@@ -54,6 +60,8 @@ class TableCell extends Block {
     return CELL_STYLE_ATTRIBUTES.reduce((formats, name) => {
       if (name === 'data-row') {
         formats[name] = domNode.getAttribute('data-row');
+      } else if (name === 'data-table') {
+        formats[name] = domNode.getAttribute('data-table');
       } else if (domNode.style[name]) {
         formats[name] = domNode.style[name];
       }
@@ -71,6 +79,8 @@ class TableCell extends Block {
   format(name, value) {
     if (name === 'data-row') {
       this.domNode.setAttribute('data-row', value);
+    } else if (name === 'data-table') {
+      this.domNode.setAttribute('data-table', value);
     } else if (name === 'width') {
       this.domNode.style[name] = value;
     } else {
@@ -235,7 +245,6 @@ class ScrollableTableContainer extends Container {
       this.setScrollShadowWidth(ev.target),
     );
 
-
     const customScrollBar = document.createElement('div');
     const customScrollThumb = document.createElement('div');
     const scrollPageLeft = document.createElement('div');
@@ -275,38 +284,23 @@ class TableWrapper extends Container {
 
   checkMerge() {
     if (super.checkMerge()) {
-      if (this.statics.blotName !== this.next.statics.blotName) {
-        return false;
+      if (this.statics.blotName === this.next.statics.blotName) {
+        const thisTableId = this.getNearestDataTable(this.children);
+        const nextTableId = this.getNearestDataTable(this.next.children);
+        return !!thisTableId && !!nextTableId && thisTableId === nextTableId;
       }
       return true;
     }
     return false;
   }
 
-  // static create(value) {
-  //   const node = super.create();
-  //   if (value) {
-  //     node.setAttribute('data-row', value);
-  //   } else {
-  //     node.setAttribute('data-row', tableId());
-  //   }
-  //   return node;
-  // }
-  //
-  // static formats(domNode) {
-  //   if (domNode.hasAttribute('data-row')) {
-  //     return domNode.getAttribute('data-row');
-  //   }
-  //   return undefined;
-  // }
-  //
-  // format(name, value) {
-  //   if (name === TableWrapper.blotName && value) {
-  //     this.domNode.setAttribute('data-row', value);
-  //   } else {
-  //     super.format(name, value);
-  //   }
-  // }
+  getNearestDataTable(children) {
+    if (!children.head || !children.head.children) return null;
+    if (children.head.domNode.hasAttribute('data-table')) {
+      return children.head.domNode.getAttribute('data-table');
+    }
+    return this.getNearestDataTable(children.head.children);
+  }
 }
 TableWrapper.blotName = 'table-wrapper';
 TableWrapper.className = 'table-wrapper';
@@ -341,4 +335,4 @@ function tableId() {
   return `table-${id}`;
 }
 
-export { TableCell, TableRow, TableBody, TableContainer, ScrollableTableContainer, TableWrapper, rowId };
+export { TableCell, TableRow, TableBody, TableContainer, ScrollableTableContainer, TableWrapper, rowId, tableId };

@@ -30,6 +30,7 @@
       "karma": "9876",
       "webpack": "9080"
     }
+
   },
   "dependencies": {
     "clone": "^2.1.1",

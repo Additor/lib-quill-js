@@ -6,6 +6,9 @@ import {
   TableRow,
   TableBody,
   TableContainer,
+  ScrollableTableContainer,
+  TableWrapper,
+  rowId,
   tableId,
 } from '../formats/table';
 
@@ -15,6 +18,8 @@ class Table extends Module {
     Quill.register(TableRow);
     Quill.register(TableBody);
     Quill.register(TableContainer);
+    Quill.register(ScrollableTableContainer);
+    Quill.register(TableWrapper);
   }
 
   constructor(...args) {
@@ -45,7 +50,7 @@ class Table extends Module {
   deleteTable() {
     const [table] = this.getTable();
     if (table == null) return;
-    const offset = table.offset();
+    const offset = table.parent.parent.offset();
     table.remove();
     this.quill.update(Quill.sources.USER);
     this.quill.setSelection(offset, Quill.sources.SILENT);
@@ -117,9 +122,12 @@ class Table extends Module {
   insertTable(rows, columns) {
     const range = this.quill.getSelection();
     if (range == null) return;
+    const tid = tableId();
     const delta = new Array(rows).fill(0).reduce(memo => {
       const text = new Array(columns).fill('\n').join('');
-      return memo.insert(text, { table: tableId() });
+      return memo.insert(text, {
+        table: { 'data-row': rowId(), 'data-table': tid },
+      });
     }, new Delta().retain(range.index));
     this.quill.updateContents(delta, Quill.sources.USER);
     this.quill.setSelection(range.index, Quill.sources.SILENT);

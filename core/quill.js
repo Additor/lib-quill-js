@@ -94,7 +94,7 @@ class Quill {
     this.keyboard = this.theme.addModule('keyboard');
     this.clipboard = this.theme.addModule('clipboard');
     this.history = this.theme.addModule('history');
-    this.uploader = this.theme.addModule('uploader');
+    // this.uploader = this.theme.addModule('uploader');
     this.theme.init();
     this.emitter.on(Emitter.events.EDITOR_CHANGE, type => {
       if (type === Emitter.events.TEXT_CHANGE) {
@@ -468,7 +468,7 @@ function expandConfig(container, userConfig) {
         clipboard: true,
         keyboard: true,
         history: true,
-        uploader: true,
+        // uploader: true,
       },
     },
     userConfig,

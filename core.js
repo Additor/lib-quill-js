@@ -28,7 +28,7 @@ Quill.register({
   'modules/clipboard': Clipboard,
   'modules/history': History,
   'modules/keyboard': Keyboard,
-  'modules/uploader': Uploader,
+  // 'modules/uploader': Uploader,
 });
 
 export default Quill;
