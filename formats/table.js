@@ -175,7 +175,7 @@ class TableContainer extends Container {
         if (row.children.head != null) {
           value = TableCell.formats(row.children.head.domNode);
         }
-        const blot = this.scroll.create(TableCell.blotName, value['data-row']);
+        const blot = this.scroll.create(TableCell.blotName, value);
         row.appendChild(blot);
         blot.optimize(); // Add break blot
       });
@@ -203,7 +203,7 @@ class TableContainer extends Container {
     body.children.forEach(row => {
       const ref = row.children.at(index);
       const value = TableCell.formats(row.children.head.domNode);
-      const cell = this.scroll.create(TableCell.blotName, value['data-row']);
+      const cell = this.scroll.create(TableCell.blotName, value);
       row.insertBefore(cell, ref);
     });
   }
@@ -211,10 +211,14 @@ class TableContainer extends Container {
   insertRow(index) {
     const [body] = this.descendant(TableBody);
     if (body == null || body.children.head == null) return;
-    const id = rowId();
+    const rid = rowId();
+    const tid = body.children.head.children.head.domNode.getAttribute('data-table');
     const row = this.scroll.create(TableRow.blotName);
     body.children.head.children.forEach(() => {
-      const cell = this.scroll.create(TableCell.blotName, id);
+      const cell = this.scroll.create(TableCell.blotName, {
+        'data-row': rid,
+        'data-table': tid,
+      });
       row.appendChild(cell);
     });
     const ref = body.children.at(index);
