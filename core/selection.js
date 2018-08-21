@@ -111,7 +111,9 @@ class Selection {
 
   focus() {
     if (this.hasFocus()) return;
+    const { scrollTop } = document.documentElement;
     this.root.focus();
+    if (scrollTop) document.documentElement.scrollTop = scrollTop;
     this.setRange(this.savedRange);
   }
 
@@ -329,7 +331,11 @@ class Selection {
     const selection = document.getSelection();
     if (selection == null) return;
     if (startNode != null) {
-      if (!this.hasFocus()) this.root.focus();
+      if (!this.hasFocus()) {
+        const { scrollTop } = document.documentElement;
+        this.root.focus();
+        if (scrollTop) document.documentElement.scrollTop = scrollTop;
+      }
       const { native } = this.getNativeRange() || {};
       if (
         native == null ||

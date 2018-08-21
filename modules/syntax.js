@@ -196,7 +196,9 @@ class Syntax extends Module {
       });
       select.addEventListener('change', () => {
         blot.format(SyntaxCodeBlock.blotName, select.value);
+        const { scrollTop } = document.documentElement;
         this.quill.root.focus(); // Prevent scrolling
+        if (scrollTop) document.documentElement.scrollTop = scrollTop;
         this.highlight(blot, true);
       });
       if (blot.uiNode == null) {

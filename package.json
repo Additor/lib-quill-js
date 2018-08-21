@@ -1,6 +1,6 @@
 {
   "name": "@additor/quill",
-  "version": "2.0.2",
+  "version": "2.0.4",
   "description": "Your powerful, rich text editor",
   "author": "Sungwoo Cho <sungwoo.cho@additor.io>",
   "homepage": "http://quilljs.com",
@@ -30,7 +30,6 @@
       "karma": "9876",
       "webpack": "9080"
     }
-
   },
   "dependencies": {
     "clone": "^2.1.1",
