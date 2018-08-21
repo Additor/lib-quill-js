@@ -93,11 +93,12 @@ class Clipboard extends Module {
 
     const tableNodes = doc.getElementsByTagName('TABLE');
     if (!_.isEmpty(tableNodes)) {
-      const dataTable = tableId();
       _.forEach(tableNodes, tableNode => {
+        const dataTable = tableId();
         _.forEach(tableNode.rows, row => {
           const dataRow = rowId();
           _.forEach(row.cells, cell => {
+            if (!cell.innerHTML) cell.innerHTML = '\n';
             cell.setAttribute('data-row', dataRow);
             cell.setAttribute('data-table', dataTable);
           });
