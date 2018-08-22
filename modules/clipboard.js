@@ -98,7 +98,7 @@ class Clipboard extends Module {
         _.forEach(tableNode.rows, row => {
           const dataRow = rowId();
           _.forEach(row.cells, cell => {
-            if (!cell.innerHTML) cell.innerHTML = '\n';
+            if (!cell.innerText || !cell.innerHTML) cell.innerHTML = '\n';
             cell.setAttribute('data-row', dataRow);
             cell.setAttribute('data-table', dataTable);
           });

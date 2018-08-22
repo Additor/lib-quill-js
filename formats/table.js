@@ -3,6 +3,20 @@ import Container from '../blots/container';
 import _ from 'lodash';
 
 const CELL_STYLE_ATTRIBUTES = ['data-row', 'data-table', 'width'];
+const NOT_AVAILABLE_FORMATS = [
+  'background',
+  'script',
+  'blockquote',
+  'header',
+  'indent',
+  'list',
+  'align',
+  'direction',
+  'code-block',
+  'embed',
+  'image',
+];
+
 class TableCell extends Block {
   constructor(scroll, domNode) {
     super(scroll, domNode);
@@ -81,6 +95,9 @@ class TableCell extends Block {
   }
 
   format(name, value) {
+    if (NOT_AVAILABLE_FORMATS.indexOf(name) !== -1) {
+      return;
+    }
     if (name === 'data-row') {
       this.domNode.setAttribute('data-row', value);
     } else if (name === 'data-table') {
