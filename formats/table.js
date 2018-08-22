@@ -185,6 +185,24 @@ TableBody.blotName = 'table-body';
 TableBody.tagName = 'TBODY';
 
 class TableContainer extends Container {
+  constructor(scroll, domNode) {
+    super(scroll, domNode);
+
+    _.defer(() => {
+      const rows = this.rows();
+      if (!_.isEmpty(rows)) {
+        let resized = false;
+        rows[0].children.forEach((child) => {
+          if (child.domNode.style.width) resized = true;
+        });
+        if (!resized) {
+          this.domNode.style.tableLayout = 'fixed';
+          this.domNode.style.width = 'calc(100% - 3px)';
+        }
+      }
+    });
+  }
+
   balanceCells() {
     const rows = this.descendants(TableRow);
     const maxColumns = rows.reduce((max, row) => {
