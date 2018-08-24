@@ -69,6 +69,7 @@ class TableCell extends Block {
 
       if (value.width) {
         node.style.width = value.width;
+        node.style.minWidth = value.width;
       }
     }
     return node;
@@ -197,7 +198,7 @@ class TableContainer extends Container {
         });
         if (!resized) {
           this.domNode.style.tableLayout = 'fixed';
-          this.domNode.style.width = 'calc(100% - 3px)';
+          this.domNode.style.width = 'calc(100% - 5px)';
         }
       }
     });
