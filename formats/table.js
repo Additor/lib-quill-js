@@ -36,7 +36,6 @@ class TableCell extends Block {
         const cells = tableContainer.cells(this.cellOffset());
         _.forEach(cells, cell => cell.resizer.classList.add('hovered'));
       });
-
       resizer.addEventListener('mouseleave', () => {
         if (!scroll.isEnabled()) return;
         resizer.classList.remove('hovered');
@@ -274,47 +273,7 @@ class TableContainer extends Container {
 TableContainer.blotName = 'table-container';
 TableContainer.tagName = 'TABLE';
 
-class ScrollableTableContainer extends Container {
-  constructor(scroll, domNode) {
-    super(scroll, domNode);
-
-    // const scrollShadowLeft = document.createElement('div');
-    // const scrollShadowRight = document.createElement('div');
-    // scrollShadowLeft.className = 'scroll-shadow scroll-shadow-left';
-    // scrollShadowRight.className = 'scroll-shadow scroll-shadow-right';
-    // domNode.appendChild(scrollShadowLeft);
-    // domNode.appendChild(scrollShadowRight);
-
-    // domNode.addEventListener('scroll', ev =>
-    //   this.setScrollShadowWidth(ev.target),
-    // );
-
-    // const customScrollBar = document.createElement('div');
-    // const customScrollThumb = document.createElement('div');
-    // const scrollPageLeft = document.createElement('div');
-    // const scrollPageRight = document.createElement('div');
-    //
-    // customScrollBar.appendChild(scrollPageLeft);
-    // customScrollBar.appendChild(scrollPageRight);
-    // customScrollBar.appendChild(customScrollThumb);
-    //
-    // domNode.appendChild(customScrollBar);
-
-    // this.scrollShadowLeft = scrollShadowLeft;
-    // this.scrollShadowRight = scrollShadowRight;
-    // _.defer(() => this.setScrollShadowWidth(this.domNode));
-  }
-
-  // setScrollShadowWidth(domNode) {
-  //   const leftShadowWidth = domNode.scrollLeft > 8 ? 8 : domNode.scrollLeft;
-  //   const scrollRight =
-  //     domNode.scrollWidth - (domNode.scrollLeft + domNode.clientWidth);
-  //   const rightShadowWidth = scrollRight > 8 ? 8 : scrollRight;
-  //
-  //   this.scrollShadowLeft.style.width = `${leftShadowWidth}px`;
-  //   this.scrollShadowRight.style.width = `${rightShadowWidth}px`;
-  // }
-}
+class ScrollableTableContainer extends Container {}
 
 ScrollableTableContainer.blotName = 'scrollable-table-container';
 ScrollableTableContainer.className = 'scrollable-table-container';
