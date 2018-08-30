@@ -303,9 +303,7 @@ class TableCell extends Container {
       const nextHead = this.next.children.head.getId();
       const nextTail = this.next.children.tail.getId();
       return (
-        thisHead === thisTail &&
-        thisHead === nextHead &&
-        thisHead === nextTail
+        thisHead === thisTail && thisHead === nextHead && thisHead === nextTail
       );
     }
     return false;
@@ -338,7 +336,7 @@ class TableCell extends Container {
   }
 
   getId() {
-    return this.domNode.getAttribute('data-row');
+    return this.children.head.domNode.getAttribute('data-row');
   }
 
   row() {
@@ -440,11 +438,13 @@ class TableContainer extends Container {
       new Array(maxColumns - row.children.length).fill(0).forEach(() => {
         let value;
         if (row.children.head != null) {
-          value = TableCell.formats(row.children.head.domNode);
+          value = TableCellContent.formats(row.children.head.children.head.domNode);
         }
-        const blot = this.scroll.create(TableCell.blotName, value);
-        row.appendChild(blot);
-        blot.optimize(); // Add break blot
+        const cell = this.scroll.create(TableCell.blotName);
+        const cellContent = this.scroll.create(TableCellContent.blotName, value);
+        cell.appendChild(cellContent);
+        row.appendChild(cell);
+        cellContent.optimize(); // Add break blot
       });
     });
   }
@@ -469,8 +469,11 @@ class TableContainer extends Container {
     if (body == null || body.children.head == null) return;
     body.children.forEach(row => {
       const ref = row.children.at(index);
-      const value = TableCell.formats(row.children.head.domNode);
-      const cell = this.scroll.create(TableCell.blotName, value);
+      const value = TableCellContent.formats(
+        row.children.head.children.head.domNode,
+      );
+      value['data-cell'] = cellId();
+      const cell = this.scroll.create(TableCellContent.blotName, value);
       row.insertBefore(cell, ref);
     });
   }
@@ -479,13 +482,17 @@ class TableContainer extends Container {
     const [body] = this.descendant(TableBody);
     if (body == null || body.children.head == null) return;
     const rid = rowId();
-    const tid = body.children.head.children.head.domNode.getAttribute('data-table');
+    const tid = body.children.head.children.head.children.head.domNode.getAttribute('data-table');
     const row = this.scroll.create(TableRow.blotName);
     body.children.head.children.forEach(() => {
-      const cell = this.scroll.create(TableCell.blotName, {
+      const cell = this.scroll.create(TableCell.blotName);
+      const cellContent = this.scroll.create(TableCellContent.blotName, {
+        'data-cell': cellId(),
         'data-row': rid,
         'data-table': tid,
       });
+      cellContent.optimize();
+      cell.appendChild(cellContent);
       row.appendChild(cell);
     });
     const ref = body.children.at(index);

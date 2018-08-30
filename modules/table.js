@@ -61,13 +61,14 @@ class Table extends Module {
 
   getTable(range = this.quill.getSelection()) {
     if (range == null) return [null, null, null, -1];
-    const [cell, offset] = this.quill.getLine(range.index);
-    if (cell == null || cell.statics.blotName !== TableCell.blotName) {
+    const [line, offset] = this.quill.getLine(range.index);
+    if (line == null || line.statics.blotName !== TableCellContent.blotName) {
       return [null, null, null, -1];
     }
+    const cell = line.parent;
     const row = cell.parent;
     const table = row.parent.parent;
-    return [table, row, cell, offset];
+    return [table, row, cell, offset, line];
   }
 
   insertColumn(offset) {
