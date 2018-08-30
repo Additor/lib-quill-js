@@ -491,7 +491,7 @@ class TableContainer extends Container {
         'data-row': rid,
         'data-table': tid,
       });
-      cellContent.optimize();
+      cellContent.optimize(); // add break
       cell.appendChild(cellContent);
       row.appendChild(cell);
     });
