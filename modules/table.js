@@ -2,18 +2,21 @@ import Delta from 'quill-delta';
 import Quill from '../core/quill';
 import Module from '../core/module';
 import {
+  TableCellContent,
   TableCell,
   TableRow,
   TableBody,
   TableContainer,
   ScrollableTableContainer,
   TableWrapper,
+  cellId,
   rowId,
   tableId,
 } from '../formats/table';
 
 class Table extends Module {
   static register() {
+    Quill.register(TableCellContent);
     Quill.register(TableCell);
     Quill.register(TableRow);
     Quill.register(TableBody);
@@ -123,12 +126,25 @@ class Table extends Module {
     const range = this.quill.getSelection();
     if (range == null) return;
     const tid = tableId();
+    // const delta = new Array(rows).fill(0).reduce(memo => {
+    //   const text = new Array(columns).fill('\n').join('');
+    //   return memo.insert(text, {
+    //     table: { 'data-cell': cellId(), 'data-row': rowId(), 'data-table': tid },
+    //   });
+    // }, new Delta().retain(range.index));
+
     const delta = new Array(rows).fill(0).reduce(memo => {
-      const text = new Array(columns).fill('\n').join('');
-      return memo.insert(text, {
-        table: { 'data-row': rowId(), 'data-table': tid },
-      });
+      const rid = rowId();
+      const innerDelta = new Array(columns).fill(0).reduce(innerMemo => {
+        return innerMemo.insert('\n', {
+          table: { 'data-cell': cellId(), 'data-row': rid, 'data-table': tid },
+        });
+      }, new Delta());
+
+      return memo.concat(innerDelta);
     }, new Delta().retain(range.index));
+    debugger;
+
     this.quill.updateContents(delta, Quill.sources.USER);
     this.quill.setSelection(range.index, Quill.sources.SILENT);
     this.balanceTables();

@@ -332,6 +332,7 @@ Keyboard.DEFAULTS = {
         const module = this.quill.getModule('table');
         if (module) {
           const [table, row, cell, offset] = module.getTable(range);
+          debugger;
           const shift = tableSide(table, row, cell, offset);
           if (shift == null) return;
           let index = table.parent.parent.offset();

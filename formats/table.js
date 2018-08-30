@@ -2,7 +2,7 @@ import Block from '../blots/block';
 import Container from '../blots/container';
 import _ from 'lodash';
 
-const CELL_STYLE_ATTRIBUTES = ['data-row', 'data-table', 'width'];
+const CELL_STYLE_ATTRIBUTES = ['data-cell', 'data-row', 'data-table', 'width'];
 const NOT_AVAILABLE_FORMATS = [
   'background',
   'script',
@@ -17,7 +17,7 @@ const NOT_AVAILABLE_FORMATS = [
   'image',
 ];
 
-class TableCell extends Block {
+class OriginTableCell extends Block {
   constructor(scroll, domNode) {
     super(scroll, domNode);
 
@@ -128,16 +128,244 @@ class TableCell extends Block {
     return this.row() && this.row().table();
   }
 }
-TableCell.blotName = 'table';
-TableCell.tagName = 'TD';
+OriginTableCell.blotName = 'table';
+OriginTableCell.tagName = 'TD';
 
-class TableRow extends Container {
+class TableCellContent extends Block {
+  static create(value) {
+    const node = super.create();
+
+    if (value['data-cell']) {
+      node.setAttribute('data-cell', value['data-cell']);
+    } else {
+      node.setAttribute('data-cell', cellId());
+    }
+
+    if (value['data-row']) {
+      node.setAttribute('data-row', value['data-row']);
+    } else {
+      node.setAttribute('data-row', rowId());
+    }
+
+    if (value['data-table']) {
+      node.setAttribute('data-table', value['data-table']);
+    } else {
+      node.setAttribute('data-table', tableId());
+    }
+    return node;
+  }
+
+  static formats(domNode) {
+    return CELL_STYLE_ATTRIBUTES.reduce((formats, name) => {
+      if (name === 'data-cell') {
+        formats[name] = domNode.getAttribute('data-cell');
+      } else if (name === 'data-row') {
+        formats[name] = domNode.getAttribute('data-row');
+      } else if (name === 'data-table') {
+        formats[name] = domNode.getAttribute('data-table');
+      } else if (domNode.style[name]) {
+        formats[name] = domNode.style[name];
+      }
+      return formats;
+    }, {});
+  }
+
+  format(name, value) {
+    if (NOT_AVAILABLE_FORMATS.indexOf(name) !== -1) {
+      return;
+    }
+    if (name === 'data-row') {
+      this.domNode.setAttribute('data-row', value);
+    } else if (name === 'data-table') {
+      this.domNode.setAttribute('data-table', value);
+    } else if (name === 'width') {
+      this.domNode.style[name] = value;
+    } else {
+      super.format(name, value);
+    }
+  }
+
+  // optimize(...args) {
+  //   super.optimize(...args);
+  //   this.children.forEach(child => {
+  //     if (child.next == null) return;
+  //     const childFormats = child.getId();
+  //     const nextFormats = child.next.getId();
+  //     if (childFormats !== nextFormats) {
+  //       const next = this.splitAfter(child);
+  //       if (next) {
+  //         next.optimize();
+  //       }
+  //       // We might be able to merge with prev now
+  //       if (this.prev) {
+  //         this.prev.optimize();
+  //       }
+  //     }
+  //   });
+  // }
+
+  cellOffset() {
+    if (this.parent) {
+      return this.parent.children.indexOf(this);
+    }
+    return -1;
+  }
+
+  getId() {
+    return this.domNode.getAttribute('data-cell');
+  }
+
+  getRowId() {
+    return this.domNode.getAttribute('data-row');
+  }
+
+  row() {
+    return this.parent;
+  }
+
+  rowOffset() {
+    if (this.row()) {
+      return this.row().rowOffset();
+    }
+    return -1;
+  }
+
+  table() {
+    return this.row() && this.row().table();
+  }
+}
+TableCellContent.blotName = 'table';
+
+/* new cell */
+class TableCell extends Container {
+  constructor(scroll, domNode) {
+    super(scroll, domNode);
+
+    if (scroll.isEnabled()) {
+      const resizer = document.createElement('div');
+      const resizerInner = document.createElement('div');
+      resizerInner.classList.add('resizer-inner');
+      resizer.appendChild(resizerInner);
+      resizer.classList.add('resizer');
+      resizer.contentEditable = false;
+      domNode.appendChild(resizer);
+      resizer.addEventListener('mouseenter', () => {
+        if (!scroll.isEnabled()) return;
+        resizer.classList.add('hovered');
+        const tableContainer = this.table();
+        const cells = tableContainer.cells(this.cellOffset());
+        _.forEach(cells, cell => cell.resizer.classList.add('hovered'));
+      });
+      resizer.addEventListener('mouseleave', () => {
+        if (!scroll.isEnabled()) return;
+        resizer.classList.remove('hovered');
+        const tableContainer = this.table();
+        const cells = tableContainer.cells(this.cellOffset());
+        _.forEach(cells, cell => cell.resizer.classList.remove('hovered'));
+      });
+
+      this.resizer = resizer;
+    }
+  }
+
+  static create(value) {
+    const node = super.create();
+
+    if (value) {
+      if (_.isString(value)) {
+        node.setAttribute('data-row', value);
+      } else {
+        if (value['data-row']) {
+          node.setAttribute('data-row', value['data-row']);
+        } else {
+          node.setAttribute('data-row', rowId());
+        }
+
+        if (value['data-table']) {
+          node.setAttribute('data-table', value['data-table']);
+        } else {
+          node.setAttribute('data-table', tableId());
+        }
+
+        if (value.width) {
+          node.style.width = value.width;
+          node.style.minWidth = value.width;
+        }
+      }
+    }
+    return node;
+  }
+
   checkMerge() {
     if (super.checkMerge() && this.next.children.head != null) {
       const thisHead = this.children.head.getId();
       const thisTail = this.children.tail.getId();
       const nextHead = this.next.children.head.getId();
       const nextTail = this.next.children.tail.getId();
+      return (
+        thisHead === thisTail &&
+        thisHead === nextHead &&
+        thisHead === nextTail
+      );
+    }
+    return false;
+  }
+
+  optimize(...args) {
+    super.optimize(...args);
+    this.children.forEach(child => {
+      if (child.next == null) return;
+      const childFormats = child.getId();
+      const nextFormats = child.next.getId();
+      if (childFormats !== nextFormats) {
+        const next = this.splitAfter(child);
+        if (next) {
+          next.optimize();
+        }
+        // We might be able to merge with prev now
+        if (this.prev) {
+          this.prev.optimize();
+        }
+      }
+    });
+  }
+
+  cellOffset() {
+    if (this.parent) {
+      return this.parent.children.indexOf(this);
+    }
+    return -1;
+  }
+
+  getId() {
+    return this.domNode.getAttribute('data-row');
+  }
+
+  row() {
+    return this.parent;
+  }
+
+  rowOffset() {
+    if (this.row()) {
+      return this.row().rowOffset();
+    }
+    return -1;
+  }
+
+  table() {
+    return this.row() && this.row().table();
+  }
+}
+TableCell.blotName = 'table-cell';
+TableCell.tagName = 'TD';
+
+class TableRow extends Container {
+  checkMerge() {
+    if (super.checkMerge() && this.next.children.head != null) {
+      const thisHead = this.children.head.children.head.getRowId();
+      const thisTail = this.children.tail.children.tail.getRowId();
+      const nextHead = this.next.children.head.children.head.getRowId();
+      const nextTail = this.next.children.tail.children.tail.getRowId();
       return (
         thisHead === thisTail &&
         thisHead === nextHead &&
@@ -324,6 +552,16 @@ TableRow.requiredContainer = TableBody;
 TableRow.allowedChildren = [TableCell];
 TableCell.requiredContainer = TableRow;
 
+TableCell.allowedChildren = [TableCellContent];
+TableCellContent.requiredContainer = TableCell;
+
+function cellId() {
+  const id = Math.random()
+    .toString(36)
+    .slice(2, 6);
+  return `cell-${id}`;
+}
+
 function rowId() {
   const id = Math.random()
     .toString(36)
@@ -338,4 +576,4 @@ function tableId() {
   return `table-${id}`;
 }
 
-export { TableCell, TableRow, TableBody, TableContainer, ScrollableTableContainer, TableWrapper, rowId, tableId };
+export { TableCellContent, TableCell, TableRow, TableBody, TableContainer, ScrollableTableContainer, TableWrapper, cellId, rowId, tableId };
