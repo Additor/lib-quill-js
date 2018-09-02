@@ -99,9 +99,7 @@ class Clipboard extends Module {
           const dataRow = rowId();
           _.forEach(row.cells, cell => {
             const dataCell = cellId();
-
             const cellWidth = _.get(cell.style, 'width');
-
             _.forEach(cell.childNodes, (childNode, contentIndex) => {
               const cellContent = document.createElement('div');
               cellContent.className = 'td-content';
