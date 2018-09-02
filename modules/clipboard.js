@@ -19,7 +19,7 @@ import { ColorStyle } from '../formats/color';
 import { DirectionAttribute, DirectionStyle } from '../formats/direction';
 import { FontStyle } from '../formats/font';
 import { SizeStyle } from '../formats/size';
-import { rowId, tableId } from '../formats/table';
+import { cellId, rowId, tableId } from '../formats/table';
 
 const debug = logger('quill:clipboard');
 
@@ -98,9 +98,24 @@ class Clipboard extends Module {
         _.forEach(tableNode.rows, row => {
           const dataRow = rowId();
           _.forEach(row.cells, cell => {
-            if (!cell.innerText || !cell.innerHTML) cell.innerHTML = '\n';
-            cell.setAttribute('data-row', dataRow);
-            cell.setAttribute('data-table', dataTable);
+            const dataCell = cellId();
+            _.forEach(cell.childNodes, childNode => {
+              const cellContent = document.createElement('div');
+              cellContent.className = 'td-content';
+              cellContent.setAttribute('data-cell', dataCell);
+              cellContent.setAttribute('data-row', dataRow);
+              cellContent.setAttribute('data-table', dataTable);
+              if (_.get(childNode, 'nodeName') === '#text') {
+                cellContent.innerText = childNode.textContent;
+                cell.replaceChild(cellContent, childNode);
+              } else {
+                cellContent.innerHTML = childNode.innerHTML || '';
+                if (!cellContent.innerText || !cellContent.innerHTML) {
+                  cellContent.innerHTML = '<br>';
+                }
+                cell.replaceChild(cellContent, childNode);
+              }
+            });
           });
         });
       });
