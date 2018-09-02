@@ -235,6 +235,8 @@ class TableCellContent extends Block {
   }
 }
 TableCellContent.blotName = 'table';
+TableCellContent.tagName = 'div';
+TableCellContent.className = 'td-content';
 
 /* new cell */
 class TableCell extends Container {

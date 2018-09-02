@@ -144,7 +144,6 @@ class Table extends Module {
 
       return memo.concat(innerDelta);
     }, new Delta().retain(range.index));
-    debugger;
 
     this.quill.updateContents(delta, Quill.sources.USER);
     this.quill.setSelection(range.index, Quill.sources.SILENT);
