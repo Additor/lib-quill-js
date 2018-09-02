@@ -127,13 +127,6 @@ class Table extends Module {
     const range = this.quill.getSelection();
     if (range == null) return;
     const tid = tableId();
-    // const delta = new Array(rows).fill(0).reduce(memo => {
-    //   const text = new Array(columns).fill('\n').join('');
-    //   return memo.insert(text, {
-    //     table: { 'data-cell': cellId(), 'data-row': rowId(), 'data-table': tid },
-    //   });
-    // }, new Delta().retain(range.index));
-
     const delta = new Array(rows).fill(0).reduce(memo => {
       const rid = rowId();
       const innerDelta = new Array(columns).fill(0).reduce(innerMemo => {
@@ -153,7 +146,7 @@ class Table extends Module {
   listenBalanceCells() {
     this.quill.on(Quill.events.SCROLL_OPTIMIZE, mutations => {
       mutations.some(mutation => {
-        if (mutation.target.tagName === 'TABLE') {
+        if (['TD', 'TR', 'TBODY', 'TABLE'].includes(mutation.target.tagName)) {
           this.quill.once(Quill.events.TEXT_CHANGE, (delta, old, source) => {
             if (source !== Quill.sources.USER) return;
             this.balanceTables();

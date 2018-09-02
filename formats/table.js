@@ -206,25 +206,6 @@ class TableCellContent extends Block {
     }
   }
 
-  // optimize(...args) {
-  //   super.optimize(...args);
-  //   this.children.forEach(child => {
-  //     if (child.next == null) return;
-  //     const childFormats = child.getId();
-  //     const nextFormats = child.next.getId();
-  //     if (childFormats !== nextFormats) {
-  //       const next = this.splitAfter(child);
-  //       if (next) {
-  //         next.optimize();
-  //       }
-  //       // We might be able to merge with prev now
-  //       if (this.prev) {
-  //         this.prev.optimize();
-  //       }
-  //     }
-  //   });
-  // }
-
   cellOffset() {
     if (this.parent) {
       return this.parent.children.indexOf(this);
@@ -433,10 +414,16 @@ class TableContainer extends Container {
       new Array(maxColumns - row.children.length).fill(0).forEach(() => {
         let value;
         if (row.children.head != null) {
-          value = TableCellContent.formats(row.children.head.children.head.domNode);
+          value = TableCellContent.formats(
+            row.children.head.children.head.domNode,
+          );
         }
+        value['data-cell'] = cellId();
         const cell = this.scroll.create(TableCell.blotName);
-        const cellContent = this.scroll.create(TableCellContent.blotName, value);
+        const cellContent = this.scroll.create(
+          TableCellContent.blotName,
+          value,
+        );
         cell.appendChild(cellContent);
         row.appendChild(cell);
         cellContent.optimize(); // Add break blot
