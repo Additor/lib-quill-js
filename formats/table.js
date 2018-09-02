@@ -2,7 +2,7 @@ import Block from '../blots/block';
 import Container from '../blots/container';
 import _ from 'lodash';
 
-const CELL_STYLE_ATTRIBUTES = ['data-cell', 'data-row', 'data-table', 'width'];
+const CELL_STYLE_ATTRIBUTES = ['data-cell', 'data-row', 'data-table', 'data-width', 'width'];
 const NOT_AVAILABLE_FORMATS = [
   'background',
   'script',
@@ -132,6 +132,18 @@ OriginTableCell.blotName = 'table';
 OriginTableCell.tagName = 'TD';
 
 class TableCellContent extends Block {
+  constructor(scroll, domNode) {
+    super(scroll, domNode);
+
+    _.defer(() => {
+      const cellWidth = this.domNode.getAttribute('data-width');
+      if (cellWidth) {
+        this.parent.domNode.style.width = cellWidth;
+        this.parent.domNode.style.minWidth = cellWidth;
+      }
+    });
+  }
+
   static create(value) {
     const node = super.create();
 
@@ -152,6 +164,11 @@ class TableCellContent extends Block {
     } else {
       node.setAttribute('data-table', tableId());
     }
+
+    if (value['data-width']) {
+      node.setAttribute('data-width', value['data-width']);
+    }
+
     return node;
   }
 
@@ -163,6 +180,8 @@ class TableCellContent extends Block {
         formats[name] = domNode.getAttribute('data-row');
       } else if (name === 'data-table') {
         formats[name] = domNode.getAttribute('data-table');
+      } else if (name === 'data-width') {
+        formats[name] = domNode.getAttribute('data-width');
       } else if (domNode.style[name]) {
         formats[name] = domNode.style[name];
       }
@@ -178,6 +197,8 @@ class TableCellContent extends Block {
       this.domNode.setAttribute('data-row', value);
     } else if (name === 'data-table') {
       this.domNode.setAttribute('data-table', value);
+    } else if (name === 'data-width') {
+      this.domNode.setAttribute('data-width', value);
     } else if (name === 'width') {
       this.domNode.style[name] = value;
     } else {
@@ -268,34 +289,6 @@ class TableCell extends Container {
 
       this.resizer = resizer;
     }
-  }
-
-  static create(value) {
-    const node = super.create();
-
-    if (value) {
-      if (_.isString(value)) {
-        node.setAttribute('data-row', value);
-      } else {
-        if (value['data-row']) {
-          node.setAttribute('data-row', value['data-row']);
-        } else {
-          node.setAttribute('data-row', rowId());
-        }
-
-        if (value['data-table']) {
-          node.setAttribute('data-table', value['data-table']);
-        } else {
-          node.setAttribute('data-table', tableId());
-        }
-
-        if (value.width) {
-          node.style.width = value.width;
-          node.style.minWidth = value.width;
-        }
-      }
-    }
-    return node;
   }
 
   checkMerge() {
