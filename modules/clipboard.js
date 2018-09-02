@@ -95,16 +95,22 @@ class Clipboard extends Module {
     if (!_.isEmpty(tableNodes)) {
       _.forEach(tableNodes, tableNode => {
         const dataTable = tableId();
-        _.forEach(tableNode.rows, row => {
+        _.forEach(tableNode.rows, (row, rowIndex) => {
           const dataRow = rowId();
           _.forEach(row.cells, cell => {
             const dataCell = cellId();
-            _.forEach(cell.childNodes, childNode => {
+
+            const cellWidth = _.get(cell.style, 'width');
+
+            _.forEach(cell.childNodes, (childNode, contentIndex) => {
               const cellContent = document.createElement('div');
               cellContent.className = 'td-content';
               cellContent.setAttribute('data-cell', dataCell);
               cellContent.setAttribute('data-row', dataRow);
               cellContent.setAttribute('data-table', dataTable);
+              if (rowIndex === 0 && contentIndex === 0 && cellWidth) {
+                cellContent.setAttribute('data-width', cellWidth);
+              }
               if (_.get(childNode, 'nodeName') === '#text') {
                 cellContent.innerText = childNode.textContent;
                 cell.replaceChild(cellContent, childNode);
