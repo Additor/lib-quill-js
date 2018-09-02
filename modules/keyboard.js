@@ -305,16 +305,10 @@ Keyboard.DEFAULTS = {
       format: ['table'],
       collapsed: true,
       offset: 0,
-      handler(range) {
-        const [line, offset] = this.quill.getLine(range.index - 1);
-        if (line.statics.blotName === 'table') {
-          return false;
-        }
-        if (offset > 0) {
-          this.quill.setSelection(range.index - 1, 0, Quill.sources.USER);
-        } else {
-          line.remove();
-        }
+      handler(range, context) {
+        const { line } = context;
+        if (!line) return false;
+        return line.parent.length() > 1 || line.length() > 1;
       },
     },
     'table delete': {
