@@ -141,7 +141,7 @@ class Clipboard extends Module {
     // Remove trailing newline
     if (
       deltaEndsWith(delta, '\n') &&
-      (delta.ops[delta.ops.length - 1].attributes == null || formats.table)
+      (delta.ops[delta.ops.length - 1].attributes == null)
     ) {
       return delta.compose(new Delta().retain(delta.length() - 1).delete(1));
     }
@@ -170,7 +170,6 @@ class Clipboard extends Module {
   }
 
   onCapturePaste(e) {
-    debugger;
     if (e.defaultPrevented || !this.quill.isEnabled()) return;
     e.preventDefault();
     const range = this.quill.getSelection(true);
@@ -202,17 +201,17 @@ class Clipboard extends Module {
     const formats = this.quill.getFormat(range.index);
     const pastedDelta = this.convert({ text, html }, formats);
     debug.log('onPaste', pastedDelta, { text, html });
-    let delta;
+    const delta = new Delta()
+      .retain(range.index)
+      .delete(range.length)
+      .concat(pastedDelta);
     if (formats.table) {
-      delta = new Delta()
-        .retain(range.index)
-        .delete(range.length)
-        .insert((text || '').replace(/(\r\n\t|\n|\r\t)/gm, '')); // 표 내부에서는 공백을 제거하여 붙여넣는다.
-    } else {
-      delta = new Delta()
-        .retain(range.index)
-        .delete(range.length)
-        .concat(pastedDelta);
+      _.forEach(delta.ops, op => {
+        if (op.insert) {
+          if (!op.attributes) op.attributes = {};
+          op.attributes.table = formats.table;
+        }
+      });
     }
     this.quill.updateContents(delta, Quill.sources.USER);
     // range.length contributes to delta.length()
