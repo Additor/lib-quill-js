@@ -135,7 +135,7 @@ class TableCellContent extends Block {
   constructor(scroll, domNode) {
     super(scroll, domNode);
 
-    _.defer(() => {
+    setTimeout(() => {
       const cellWidth = this.domNode.getAttribute('data-width');
       if (cellWidth) {
         this.parent.domNode.style.width = cellWidth;
