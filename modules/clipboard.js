@@ -84,7 +84,7 @@ class Clipboard extends Module {
         [CodeBlock.blotName]: formats[CodeBlock.blotName],
       });
     } else if (!html) {
-      return new Delta().insert(text || '');
+      html = `<meta charset='utf-8'>${text}`;
     }
     const doc = new DOMParser().parseFromString(
       html.replace(/>\r?\n +</g, '><'), // Remove spaces between tags
@@ -170,6 +170,7 @@ class Clipboard extends Module {
   }
 
   onCapturePaste(e) {
+    debugger;
     if (e.defaultPrevented || !this.quill.isEnabled()) return;
     e.preventDefault();
     const range = this.quill.getSelection(true);
