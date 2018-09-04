@@ -446,6 +446,7 @@ Quill.DEFAULTS = {
   registry: globalRegistry,
   scrollingContainer: null,
   theme: 'default',
+  minTableWidth: 692,
 };
 Quill.events = Emitter.events;
 Quill.sources = Emitter.sources;

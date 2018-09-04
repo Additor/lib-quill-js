@@ -2,6 +2,7 @@ import Block from '../blots/block';
 import Container from '../blots/container';
 import _ from 'lodash';
 import Emitter from "../core/emitter";
+import Quill from "../core/quill";
 
 const CELL_STYLE_ATTRIBUTES = ['data-cell', 'data-row', 'data-table', 'data-width', 'width'];
 const NOT_AVAILABLE_FORMATS = [
@@ -436,20 +437,28 @@ class TableContainer extends Container {
     });
   }
 
-  fitCells() {
-    const rows = this.descendants(TableRow);
-    if (rows[0]) {
-      const tableOffsetWidth = this.domNode.offsetWidth;
-      const rootWidth = this.scroll.domNode.offsetWidth - 5;
-      this.domNode.style.width = `${rootWidth}px`;
-      if (rows[0].children.head.domNode.style.width) {
-        rows[0].children.forEach(child => {
-          const originWidth = Number.parseInt(child.domNode.style.width.replace('px', ''));
-          const newWidth = (originWidth / tableOffsetWidth) * rootWidth;
-          child.domNode.style.width = `${newWidth}px`;
-          child.domNode.style.minWidth = `${newWidth}px`;
-        });
-      }
+  fitCells(force = false) {
+    const rows = this.rows();
+    if (!rows[0]) return;
+    const headCells = rows[0].children.map(child => child);
+
+    // resize 된 셀이 없으면 테이블의 가로길이가 항상 100% 이기에 따로 조정해주지 않는다.
+    const resized = _.some(headCells, cell => cell.children.head.domNode.hasAttribute('data-width'));
+    if (!resized) return;
+
+    // 테이블의 width가 MIN_TABLE_WIDTH 보다 작을 때 테이블의 가로길이를 100%로 지정한다.
+    if (this.domNode.offsetWidth > Quill.DEFAULTS.minTableWidth && !force) return;
+
+    const tableOffsetWidth = this.domNode.offsetWidth;
+    const rootWidth = this.scroll.domNode.offsetWidth - 5;
+    this.domNode.style.width = `${rootWidth}px`;
+    if (rows[0].children.head.domNode.style.width) {
+      rows[0].children.forEach(child => {
+        const originWidth = Number.parseInt(child.domNode.style.width.replace('px', ''));
+        const newWidth = (originWidth / tableOffsetWidth) * rootWidth;
+        child.domNode.style.width = `${newWidth}px`;
+        child.domNode.style.minWidth = `${newWidth}px`;
+      });
     }
   }
 
@@ -480,6 +489,9 @@ class TableContainer extends Container {
       const cell = this.scroll.create(TableCellContent.blotName, value);
       row.insertBefore(cell, ref);
     });
+    if (this.domNode.offsetWidth <= Quill.DEFAULTS.minTableWidth) {
+      setTimeout(() => this.fitCells(true));
+    }
   }
 
   insertRow(index) {

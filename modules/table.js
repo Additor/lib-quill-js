@@ -151,15 +151,7 @@ class Table extends Module {
 
   fitTables() {
     this.quill.scroll.descendants(TableContainer).forEach(table => {
-      // 모든 cell width 의 합이 MIN_TABLE_WIDTH 보다 작으면 테이블의 가로길이를 100%로 지정
-      const MIN_TABLE_WIDTH = 692;
-      const headCells = table.rows()[0].children.map(child => child);
-      const resized = _.some(headCells, cell => cell.children.head.domNode.hasAttribute('data-width'));
-      if (resized) {
-        if (table.domNode.offsetWidth <= MIN_TABLE_WIDTH) {
-          table.fitCells();
-        }
-      }
+      table.fitCells();
     });
   }
 
