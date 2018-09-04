@@ -456,8 +456,14 @@ class TableContainer extends Container {
       rows[0].children.forEach(child => {
         const originWidth = Number.parseInt(child.domNode.style.width.replace('px', ''));
         const newWidth = (originWidth / tableOffsetWidth) * rootWidth;
-        child.domNode.style.width = `${newWidth}px`;
-        child.domNode.style.minWidth = `${newWidth}px`;
+        const newWidthString = `${newWidth}px`;
+        child.domNode.style.width = newWidthString;
+        child.domNode.style.minWidth = newWidthString;
+
+        const headCellContent = child.children.head;
+        if (headCellContent) {
+          headCellContent.format('data-width', newWidthString);
+        }
       });
     }
   }
