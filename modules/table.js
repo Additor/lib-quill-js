@@ -238,8 +238,17 @@ class Table extends Module {
 
       return memo.concat(innerDelta);
     }, new Delta().retain(range.index));
-
     this.quill.updateContents(delta, Quill.sources.USER);
+    const [cellContent] = this.quill.getLine(range.index);
+    const tableWrapper = cellContent.tableWrapper();
+    // table 다음 라인 제거
+    if (
+      tableWrapper.next &&
+      tableWrapper.next.statics.blotName === 'block' &&
+      tableWrapper.next.length() === 1
+    ) {
+      tableWrapper.next.remove();
+    }
     this.quill.setSelection(range.index, Quill.sources.SILENT);
     this.balanceTables();
   }
