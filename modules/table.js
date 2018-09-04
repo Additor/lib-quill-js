@@ -41,7 +41,6 @@ class Table extends Module {
   }
 
   handleKeyDownFakeCursor(ev) {
-    debugger;
     if (!this.tableFocusData) return;
     const { cursorOffset, blot } = this.tableFocusData;
     const tableIndex = this.quill.getIndex(blot);
