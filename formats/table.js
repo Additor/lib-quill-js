@@ -1,6 +1,7 @@
 import Block from '../blots/block';
 import Container from '../blots/container';
 import _ from 'lodash';
+import Emitter from "../core/emitter";
 
 const CELL_STYLE_ATTRIBUTES = ['data-cell', 'data-row', 'data-table', 'data-width', 'width'];
 const NOT_AVAILABLE_FORMATS = [
@@ -500,6 +501,70 @@ class TableWrapper extends Container {
   constructor(scroll, domNode) {
     super(scroll, domNode);
     domNode.id = tableId();
+
+    const leftTableCursorHelper = document.createElement('div');
+    const rightTableCursorHelper = document.createElement('div');
+
+    leftTableCursorHelper.className = 'table-cursor-helper left';
+    rightTableCursorHelper.className = 'table-cursor-helper right';
+    leftTableCursorHelper.setAttribute('contenteditable', false);
+    rightTableCursorHelper.setAttribute('contenteditable', false);
+
+    domNode.appendChild(leftTableCursorHelper);
+    domNode.appendChild(rightTableCursorHelper);
+
+    leftTableCursorHelper.addEventListener('click', () => this.showFakeCursor(true));
+    rightTableCursorHelper.addEventListener('click', () => this.showFakeCursor(false));
+  }
+
+  showFakeCursor(left = true) {
+    let cursorParent;
+    if (left) {
+      cursorParent = this.domNode.querySelector('.table-cursor-helper.left');
+    } else {
+      cursorParent = this.domNode.querySelector('.table-cursor-helper.right');
+    }
+    if (!cursorParent) return;
+    const oldFakeCursor = document.getElementById('table-fake-cursor');
+    if (oldFakeCursor) oldFakeCursor.remove();
+    this.scroll.domNode.blur();
+    const fakeCursor = document.createElement('div');
+    fakeCursor.id = 'table-fake-cursor';
+    fakeCursor.className = 'table-fake-cursor';
+    cursorParent.appendChild(fakeCursor);
+    this.scroll.emitter.emit(Emitter.events.TABLE_FOCUS, {
+      blot: this,
+      cursorOffset: left ? 0 : 1,
+    });
+    this.scroll.emitter.once(Emitter.events.SELECTION_CHANGE, () => {
+      fakeCursor.remove();
+    });
+  }
+
+  handleClickCursor(e, left = true) {
+    if (e == null && left) {
+      const target = this.domNode.querySelector('.table-cursor-helper.left');
+      e = { target };
+    } else if (e == null) {
+      const target = this.domNode.querySelector('.table-cursor-helper.right');
+      e = { target };
+    }
+    const { target } = e;
+    if (!target) return;
+    const oldFakeCursor = document.getElementById('table-fake-cursor');
+    if (oldFakeCursor) oldFakeCursor.remove();
+    this.scroll.domNode.blur();
+    const fakeCursor = document.createElement('div');
+    fakeCursor.id = 'table-fake-cursor';
+    fakeCursor.className = 'table-fake-cursor';
+    target.appendChild(fakeCursor);
+    this.scroll.emitter.emit(Emitter.events.TABLE_FOCUS, {
+      blot: this,
+      cursorOffset: left ? 0 : 1,
+    });
+    this.scroll.emitter.once(Emitter.events.SELECTION_CHANGE, () => {
+      fakeCursor.remove();
+    });
   }
 
   checkMerge() {

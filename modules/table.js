@@ -28,6 +28,108 @@ class Table extends Module {
   constructor(...args) {
     super(...args);
     this.listenBalanceCells();
+    this.listenTableFocus();
+    this.listenSelectionChange();
+    window.addEventListener('mousedown', this.handleMouseDown.bind(this));
+    window.addEventListener('touchstart', this.handleMouseDown.bind(this));
+    window.addEventListener('keydown', this.handleKeyDownFakeCursor.bind(this));
+  }
+
+  handleMouseDown() {
+    const oldFakeCursor = document.getElementById('table-fake-cursor');
+    if (oldFakeCursor) oldFakeCursor.remove();
+  }
+
+  handleKeyDownFakeCursor(ev) {
+    debugger;
+    if (!this.tableFocusData) return;
+    const { cursorOffset, blot } = this.tableFocusData;
+    const tableIndex = this.quill.getIndex(blot);
+    const tableLastIndex = tableIndex + blot.length();
+    const quillLength = this.quill.getLength();
+
+    let prevented = false;
+    switch (ev.keyCode) {
+      case 37: // arrow left
+        if (cursorOffset === 0) {
+          if (tableIndex > 0) {
+            this.quill.setSelection(tableIndex - 1, 0, Quill.sources.USER);
+          }
+        } else {
+          this.quill.setSelection(tableLastIndex - 1, 0, Quill.sources.USER);
+        }
+        prevented = true;
+        break;
+      case 38: // arrow up
+        if (tableIndex > 0) {
+          this.quill.setSelection(tableIndex - 1, 0, Quill.sources.USER);
+        }
+        prevented = true;
+        break;
+      case 39: // arrow right
+        if (cursorOffset === 0) {
+          this.quill.setSelection(tableIndex, 0, Quill.sources.USER);
+        } else if (tableLastIndex < quillLength) {
+          this.quill.setSelection(tableIndex + blot.length(), 0, Quill.sources.USER);
+        }
+        prevented = true;
+        break;
+      case 40: // arrow down
+        if (tableLastIndex < quillLength) {
+          this.quill.setSelection(tableIndex + blot.length(), 0, Quill.sources.USER);
+        }
+        prevented = true;
+        break;
+      case 13: // enter
+        if (cursorOffset === 0) {
+          const delta = new Delta().retain(tableIndex).insert('\n');
+          this.quill.updateContents(delta, 'user');
+          const [line] = this.quill.getLine(tableIndex);
+          const newTableWrapper = line.next;
+          newTableWrapper.showFakeCursor();
+        } else {
+          const delta = new Delta().retain(tableLastIndex).insert('\n');
+          this.quill.updateContents(delta, 'user');
+          this.quill.setSelection(tableLastIndex, 'user');
+        }
+        prevented = true;
+        break;
+      case 8: // backspace
+        if (cursorOffset === 0) {
+          const [line] = this.quill.getLine(tableIndex - 1);
+          if (line.length() <= 1) {
+            line.remove();
+          } else {
+            this.quill.setSelection(tableIndex - 1, 0, Quill.sources.USER);
+          }
+        } else {
+          blot.remove();
+          this.quill.update(Quill.sources.USER);
+          this.quill.setSelection(tableIndex, Quill.sources.SILENT);
+        }
+        prevented = true;
+        break;
+      default:
+    }
+
+    if (!prevented) {
+      if (ev.key.length === 1 && cursorOffset === 0) {
+        const delta = new Delta().retain(tableIndex).insert('\n');
+        this.quill.updateContents(delta, 'user');
+        this.quill.setSelection(tableIndex, Quill.sources.SILENT);
+      } else if (ev.key.length === 1) {
+        const delta = new Delta().retain(tableLastIndex).insert('\n');
+        this.quill.updateContents(delta, 'user');
+        this.quill.setSelection(tableLastIndex, 'user');
+      } else {
+        prevented = true;
+      }
+    }
+
+    if (prevented) {
+      ev.preventDefault();
+      ev.stopPropagation();
+    }
   }
 
   balanceTables() {
@@ -155,6 +257,18 @@ class Table extends Module {
         }
         return false;
       });
+    });
+  }
+
+  listenTableFocus() {
+    this.quill.on(Quill.events.TABLE_FOCUS, data => {
+      this.tableFocusData = data;
+    });
+  }
+
+  listenSelectionChange() {
+    this.quill.on(Quill.events.SELECTION_CHANGE, () => {
+      this.tableFocusData = undefined;
     });
   }
 }
