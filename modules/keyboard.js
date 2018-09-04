@@ -436,6 +436,81 @@ Keyboard.DEFAULTS = {
         return true;
       },
     },
+    'arrow left': {
+      key: 'ArrowLeft',
+      collapsed: true,
+      offset: 0,
+      handler(range, context) {
+        // 이전 blot 이 TableWrapper 이면 fakeCursor 를 보여줌
+        if (!context.format.table) {
+          const [prevLine] = this.quill.getLine(range.index - 1);
+          if (prevLine.statics.blotName === 'table') {
+            const tableWrapper = prevLine.tableWrapper();
+            tableWrapper.showFakeCursor(false);
+            return false;
+          }
+        } else {
+          const { line: currLine } = context;
+          if (
+            !currLine.parent.prev &&
+            !currLine.row().prev &&
+            !currLine.prev
+          ) {
+            const tableWrapper = currLine.tableWrapper();
+            tableWrapper.showFakeCursor();
+            return false;
+          }
+        }
+        return true;
+      },
+    },
+    'arrow right': {
+      key: 'ArrowRight',
+      collapsed: true,
+      handler(range, context) {
+        if (!context.format.table) {
+          const [nextLine] = this.quill.getLine(range.index + 1);
+          if (nextLine.statics.blotName === 'table') {
+            const tableWrapper = nextLine.tableWrapper();
+            tableWrapper.showFakeCursor();
+            return false;
+          }
+        } else {
+          const { offset, line: currLine } = context;
+          const lineLength = currLine.length();
+          if (
+            currLine.statics.blotName === 'table' &&
+            !currLine.parent.next &&
+            !currLine.row().next &&
+            !currLine.next &&
+            offset === lineLength - 1
+          ) {
+            const tableWrapper = currLine.tableWrapper();
+            tableWrapper.showFakeCursor(false);
+            return false;
+          }
+        }
+        return true;
+      },
+    },
+    backspace: {
+      key: 'Backspace',
+      collapsed: true,
+      handler(range, context) {
+        if (!context.format.table) {
+          const [prevLine] = this.quill.getLine(range.index - 1);
+          if (prevLine.statics.blotName === 'table') {
+            const tableWrapper = prevLine.tableWrapper();
+            tableWrapper.showFakeCursor(false);
+            if (context.line.length() === 1) {
+              context.line.remove();
+            }
+            return false;
+          }
+        }
+        return true;
+      },
+    },
     'embed left': makeEmbedArrowHandler('ArrowLeft', false),
     'embed left shift': makeEmbedArrowHandler('ArrowLeft', true),
     'embed right': makeEmbedArrowHandler('ArrowRight', false),

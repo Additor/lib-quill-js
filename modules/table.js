@@ -84,8 +84,10 @@ class Table extends Module {
           const delta = new Delta().retain(tableIndex).insert('\n');
           this.quill.updateContents(delta, 'user');
           const [line] = this.quill.getLine(tableIndex);
-          const newTableWrapper = line.next;
-          newTableWrapper.showFakeCursor();
+          if (line) {
+            const newTableWrapper = line.next;
+            newTableWrapper.showFakeCursor();
+          }
         } else {
           const delta = new Delta().retain(tableLastIndex).insert('\n');
           this.quill.updateContents(delta, 'user');
@@ -98,6 +100,11 @@ class Table extends Module {
           const [line] = this.quill.getLine(tableIndex - 1);
           if (line.length() <= 1) {
             line.remove();
+            const [cellContent] = this.quill.getLine(tableIndex - 1);
+            if (cellContent) {
+              const newTableWrapper = cellContent.tableWrapper();
+              newTableWrapper.showFakeCursor();
+            }
           } else {
             this.quill.setSelection(tableIndex - 1, 0, Quill.sources.USER);
           }
@@ -111,7 +118,7 @@ class Table extends Module {
       default:
     }
 
-    if (!prevented) {
+    if (!prevented && !ev.metaKey && !ev.ctrlKey) {
       if (ev.key.length === 1 && cursorOffset === 0) {
         const delta = new Delta().retain(tableIndex).insert('\n');
         this.quill.updateContents(delta, 'user');

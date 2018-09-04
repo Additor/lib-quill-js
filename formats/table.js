@@ -223,7 +223,7 @@ class TableCellContent extends Block {
   }
 
   row() {
-    return this.parent;
+    return this.parent.parent;
   }
 
   rowOffset() {
@@ -235,6 +235,10 @@ class TableCellContent extends Block {
 
   table() {
     return this.row() && this.row().table();
+  }
+
+  tableWrapper() {
+    return this.table().wrapper();
   }
 }
 TableCellContent.blotName = 'table';
@@ -487,6 +491,10 @@ class TableContainer extends Container {
     if (body == null) return [];
     return body.children.map(row => row);
   }
+
+  wrapper() {
+    return this.parent.parent;
+  }
 }
 TableContainer.blotName = 'table-container';
 TableContainer.tagName = 'TABLE';
@@ -532,38 +540,15 @@ class TableWrapper extends Container {
     fakeCursor.id = 'table-fake-cursor';
     fakeCursor.className = 'table-fake-cursor';
     cursorParent.appendChild(fakeCursor);
-    this.scroll.emitter.emit(Emitter.events.TABLE_FOCUS, {
-      blot: this,
-      cursorOffset: left ? 0 : 1,
-    });
-    this.scroll.emitter.once(Emitter.events.SELECTION_CHANGE, () => {
-      fakeCursor.remove();
-    });
-  }
-
-  handleClickCursor(e, left = true) {
-    if (e == null && left) {
-      const target = this.domNode.querySelector('.table-cursor-helper.left');
-      e = { target };
-    } else if (e == null) {
-      const target = this.domNode.querySelector('.table-cursor-helper.right');
-      e = { target };
-    }
-    const { target } = e;
-    if (!target) return;
-    const oldFakeCursor = document.getElementById('table-fake-cursor');
-    if (oldFakeCursor) oldFakeCursor.remove();
-    this.scroll.domNode.blur();
-    const fakeCursor = document.createElement('div');
-    fakeCursor.id = 'table-fake-cursor';
-    fakeCursor.className = 'table-fake-cursor';
-    target.appendChild(fakeCursor);
-    this.scroll.emitter.emit(Emitter.events.TABLE_FOCUS, {
-      blot: this,
-      cursorOffset: left ? 0 : 1,
-    });
-    this.scroll.emitter.once(Emitter.events.SELECTION_CHANGE, () => {
-      fakeCursor.remove();
+    setTimeout(() => {
+      // fakeCursor 가 생성된 이후 이벤트부터 받고 보내기 위해 setTimeout 을 건다.
+      this.scroll.emitter.once(Emitter.events.SELECTION_CHANGE, () => {
+        fakeCursor.remove();
+      });
+      this.scroll.emitter.emit(Emitter.events.TABLE_FOCUS, {
+        blot: this,
+        cursorOffset: left ? 0 : 1,
+      });
     });
   }
 
@@ -585,6 +570,10 @@ class TableWrapper extends Container {
       return children.head.domNode.getAttribute('data-table');
     }
     return this.getNearestDataTable(children.head.children);
+  }
+
+  table() {
+    return this.descendant(TableContainer);
   }
 }
 TableWrapper.blotName = 'table-wrapper';
