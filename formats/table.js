@@ -394,7 +394,6 @@ TableBody.tagName = 'TBODY';
 class TableContainer extends Container {
   constructor(scroll, domNode) {
     super(scroll, domNode);
-
     _.defer(() => {
       const rows = this.rows();
       if (!_.isEmpty(rows)) {
@@ -415,6 +414,7 @@ class TableContainer extends Container {
     const maxColumns = rows.reduce((max, row) => {
       return Math.max(row.children.length, max);
     }, 0);
+
     rows.forEach(row => {
       new Array(maxColumns - row.children.length).fill(0).forEach(() => {
         let value;
@@ -434,6 +434,23 @@ class TableContainer extends Container {
         cellContent.optimize(); // Add break blot
       });
     });
+  }
+
+  fitCells() {
+    const rows = this.descendants(TableRow);
+    if (rows[0]) {
+      const tableOffsetWidth = this.domNode.offsetWidth;
+      const rootWidth = this.scroll.domNode.offsetWidth - 5;
+      this.domNode.style.width = `${rootWidth}px`;
+      if (rows[0].children.head.domNode.style.width) {
+        rows[0].children.forEach(child => {
+          const originWidth = Number.parseInt(child.domNode.style.width.replace('px', ''));
+          const newWidth = (originWidth / tableOffsetWidth) * rootWidth;
+          child.domNode.style.width = `${newWidth}px`;
+          child.domNode.style.minWidth = `${newWidth}px`;
+        });
+      }
+    }
   }
 
   cells(column) {

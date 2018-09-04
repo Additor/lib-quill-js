@@ -1,6 +1,7 @@
 import Delta from 'quill-delta';
 import Quill from '../core/quill';
 import Module from '../core/module';
+import _ from 'lodash';
 import {
   TableCellContent,
   TableCell,
@@ -30,9 +31,11 @@ class Table extends Module {
     this.listenBalanceCells();
     this.listenTableFocus();
     this.listenSelectionChange();
+
     window.addEventListener('mousedown', this.handleMouseDown.bind(this));
     window.addEventListener('touchstart', this.handleMouseDown.bind(this));
     window.addEventListener('keydown', this.handleKeyDownFakeCursor.bind(this));
+    window.addEventListener('resize', _.throttle(() => this.fitTables(), 50));
   }
 
   handleMouseDown() {
@@ -97,16 +100,18 @@ class Table extends Module {
         break;
       case 8: // backspace
         if (cursorOffset === 0) {
-          const [line] = this.quill.getLine(tableIndex - 1);
-          if (line.length() <= 1) {
-            line.remove();
-            const [cellContent] = this.quill.getLine(tableIndex - 1);
-            if (cellContent) {
-              const newTableWrapper = cellContent.tableWrapper();
-              newTableWrapper.showFakeCursor();
+          if (tableIndex > 0) {
+            const [line] = this.quill.getLine(tableIndex - 1);
+            if (line.length() <= 1) {
+              line.remove();
+              const [cellContent] = this.quill.getLine(tableIndex - 1);
+              if (cellContent) {
+                const newTableWrapper = cellContent.tableWrapper();
+                newTableWrapper.showFakeCursor();
+              }
+            } else {
+              this.quill.setSelection(tableIndex - 1, 0, Quill.sources.USER);
             }
-          } else {
-            this.quill.setSelection(tableIndex - 1, 0, Quill.sources.USER);
           }
         } else {
           blot.remove();
@@ -122,11 +127,11 @@ class Table extends Module {
       if (ev.key.length === 1 && cursorOffset === 0) {
         const delta = new Delta().retain(tableIndex).insert('\n');
         this.quill.updateContents(delta, 'user');
-        this.quill.setSelection(tableIndex, Quill.sources.SILENT);
+        this.quill.setSelection(tableIndex, Quill.sources.USER);
       } else if (ev.key.length === 1) {
         const delta = new Delta().retain(tableLastIndex).insert('\n');
         this.quill.updateContents(delta, 'user');
-        this.quill.setSelection(tableLastIndex, 'user');
+        this.quill.setSelection(tableLastIndex, Quill.sources.USER);
       } else {
         prevented = true;
       }
@@ -141,6 +146,20 @@ class Table extends Module {
   balanceTables() {
     this.quill.scroll.descendants(TableContainer).forEach(table => {
       table.balanceCells();
+    });
+  }
+
+  fitTables() {
+    this.quill.scroll.descendants(TableContainer).forEach(table => {
+      // 모든 cell width 의 합이 MIN_TABLE_WIDTH 보다 작으면 테이블의 가로길이를 100%로 지정
+      const MIN_TABLE_WIDTH = 692;
+      const headCells = table.rows()[0].children.map(child => child);
+      const resized = _.some(headCells, cell => cell.children.head.domNode.hasAttribute('data-width'));
+      if (resized) {
+        if (table.domNode.offsetWidth <= MIN_TABLE_WIDTH) {
+          table.fitCells();
+        }
+      }
     });
   }
 
@@ -282,6 +301,9 @@ class Table extends Module {
   }
 
   listenSelectionChange() {
+    this.quill.on(Quill.events.TEXT_CHANGE, () => {
+      this.tableFocusData = undefined;
+    });
     this.quill.on(Quill.events.SELECTION_CHANGE, () => {
       this.tableFocusData = undefined;
     });

@@ -311,6 +311,39 @@ Keyboard.DEFAULTS = {
         return line.parent.length() > 1 || line.length() > 1;
       },
     },
+    'table backspace not collapsed': {
+      key: 'Backspace',
+      empty: false,
+      collapsed: false,
+      handler(range) {
+        const anchorFormat = this.quill.getFormat(range.index);
+        const focusFormat = this.quill.getFormat(range.index + range.length);
+        if (!anchorFormat.table && !focusFormat.table) return true; // 양쪽 라인 모두 테이블셀이 아니면 return true;
+        const lines = this.quill.getLines(range.index, range.length);
+        if (range.index === 0) {
+          this.quill.deleteText(range.index, range.length + 1, 'user');
+          return false;
+        }
+        if (lines.length > 1) {
+          const anchorLine = _.head(lines);
+          const focusLine = _.last(lines);
+          if (anchorLine.parent === focusLine.parent) return true;
+          _.forEach(lines, line => {
+            const length = line.length();
+            if (length > 1) {
+              line.deleteAt(0, length - 1);
+            }
+          });
+        } else {
+          const [line] = lines;
+          const maxLength = line.length();
+          const deleteLength = range.length < maxLength ? range.length : maxLength - 1;
+          this.quill.deleteText(range.index, deleteLength);
+          this.quill.setSelection(range.index, 0);
+        }
+        return false;
+      },
+    },
     'table delete': {
       key: 'Delete',
       format: ['table'],
