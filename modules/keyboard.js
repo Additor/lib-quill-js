@@ -318,34 +318,6 @@ Keyboard.DEFAULTS = {
       suffix: /^$/,
       handler() {},
     },
-    'table enter': {
-      key: 'Enter',
-      shiftKey: null,
-      format: ['table'],
-      handler(range) {
-        const module = this.quill.getModule('table');
-        if (module) {
-          const [table, row, cell, offset] = module.getTable(range);
-          const shift = tableSide(table, row, cell, offset);
-          if (shift == null) return;
-          let index = table.parent.parent.offset();
-          if (shift < 0) {
-            const delta = new Delta().retain(index).insert('\n');
-            this.quill.updateContents(delta, Quill.sources.USER);
-            this.quill.setSelection(
-              range.index + 1,
-              range.length,
-              Quill.sources.SILENT,
-            );
-          } else if (shift > 0) {
-            index += table.length();
-            const delta = new Delta().retain(index + 1).insert('\n');
-            this.quill.updateContents(delta, Quill.sources.USER);
-            this.quill.setSelection(index, Quill.sources.USER);
-          }
-        }
-      },
-    },
     'table tab': {
       key: 'Tab',
       shiftKey: null,
