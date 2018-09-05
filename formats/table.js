@@ -1,8 +1,8 @@
 import Block from '../blots/block';
 import Container from '../blots/container';
 import _ from 'lodash';
-import Emitter from "../core/emitter";
-import Quill from "../core/quill";
+import Emitter from '../core/emitter';
+import Quill from '../core/quill';
 
 const CELL_STYLE_ATTRIBUTES = ['data-cell', 'data-row', 'data-table', 'data-width', 'width'];
 const NOT_AVAILABLE_FORMATS = [
