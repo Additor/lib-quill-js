@@ -247,6 +247,13 @@ class Selection {
       end: { node: nativeRange.endContainer, offset: nativeRange.endOffset },
       native: nativeRange,
     };
+    if (range.end.node && range.end.node.classList && range.end.node.classList.contains('td-content')) {
+      // 셀에서 텍스트 선택시 다음 셀의 텍스트까지 영향을 미치는 예외 처리
+      range.end = {
+        node: range.start.node,
+        offset: range.start.node.length,
+      };
+    }
     [range.start, range.end].forEach(position => {
       let { node, offset } = position;
       while (!(node instanceof Text) && node.childNodes.length > 0) {
