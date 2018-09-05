@@ -3,6 +3,7 @@ import clone from 'clone';
 import equal from 'deep-equal';
 import Emitter from './emitter';
 import logger from './logger';
+import { TableCellContent } from '../formats/table';
 
 const debug = logger('quill:selection');
 
@@ -224,6 +225,8 @@ class Selection {
         return index;
       } else if (blot instanceof ContainerBlot) {
         return index + blot.length();
+      } else if (blot instanceof TableCellContent) {
+        return index + blot.length() - 1;
       }
       return index + blot.index(node, offset);
     });
