@@ -219,6 +219,8 @@ class Clipboard extends Module {
       delta.length() - range.length,
       Quill.sources.SILENT,
     );
+    const tableModule = this.quill.getModule('table');
+    if (tableModule) tableModule.fitTables();
     this.quill.scrollIntoView();
   }
 
@@ -261,6 +263,9 @@ function applyFormat(delta, format, value) {
   }
   return delta.reduce((newDelta, op) => {
     if (op.attributes && op.attributes[format]) {
+      return newDelta.push(op);
+    }
+    if (format === 'color' || format === 'background') {
       return newDelta.push(op);
     }
     return newDelta.insert(
@@ -380,7 +385,7 @@ function matchAttributor(node, delta, scroll) {
   const formats = {};
   attributes
     .concat(classes)
-    .concat(styles)
+    // .concat(styles)
     .forEach(name => {
       let attr = scroll.query(name, Scope.ATTRIBUTE);
       if (attr != null) {

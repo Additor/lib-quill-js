@@ -342,10 +342,10 @@ TableCell.tagName = 'TD';
 class TableRow extends Container {
   checkMerge() {
     if (super.checkMerge() && this.next.children.head != null) {
-      const thisHead = this.children.head.children.head.getRowId();
-      const thisTail = this.children.tail.children.tail.getRowId();
-      const nextHead = this.next.children.head.children.head.getRowId();
-      const nextTail = this.next.children.tail.children.tail.getRowId();
+      const thisHead = _.invoke(this.children, 'head.children.head.getRowId', '');
+      const thisTail = _.invoke(this.children, 'tail.children.tail.getRowId', '');
+      const nextHead = _.invoke(this.next.children.head, 'children.head.getRowId', '');
+      const nextTail = _.invoke(this.next.children.tail, 'children.tail.getRowId', '');
       return (
         thisHead === thisTail &&
         thisHead === nextHead &&
@@ -415,7 +415,6 @@ class TableContainer extends Container {
     const maxColumns = rows.reduce((max, row) => {
       return Math.max(row.children.length, max);
     }, 0);
-
     rows.forEach(row => {
       new Array(maxColumns - row.children.length).fill(0).forEach(() => {
         let value;
@@ -431,8 +430,9 @@ class TableContainer extends Container {
           value,
         );
         cell.appendChild(cellContent);
-        row.appendChild(cell);
+        cell.optimize(); // Add break blot
         cellContent.optimize(); // Add break blot
+        row.appendChild(cell);
       });
     });
   }
@@ -462,7 +462,7 @@ class TableContainer extends Container {
 
         const headCellContent = child.children.head;
         if (headCellContent) {
-          headCellContent.format('data-width', newWidthString);
+          // headCellContent.format('data-width', newWidthString);
         }
       });
     }
@@ -488,9 +488,8 @@ class TableContainer extends Container {
     if (body == null || body.children.head == null) return;
     body.children.forEach(row => {
       const ref = row.children.at(index);
-      const value = TableCellContent.formats(
-        row.children.head.children.head.domNode,
-      );
+      const targetCell = ref ? ref.prev || ref : row.children.tail;
+      const value = TableCellContent.formats(targetCell.children.head.domNode);
       value['data-cell'] = cellId();
       const cell = this.scroll.create(TableCellContent.blotName, value);
       row.insertBefore(cell, ref);

@@ -276,7 +276,7 @@ class Table extends Module {
       mutations.some(mutation => {
         if (['TD', 'TR', 'TBODY', 'TABLE'].includes(mutation.target.tagName)) {
           this.quill.once(Quill.events.TEXT_CHANGE, (delta, old, source) => {
-            if (source !== Quill.sources.USER) return;
+            // if (source !== Quill.sources.USER) return;
             this.balanceTables();
           });
           return true;
