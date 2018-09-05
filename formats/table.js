@@ -22,7 +22,6 @@ const NOT_AVAILABLE_FORMATS = [
 class TableCellContent extends Block {
   constructor(scroll, domNode) {
     super(scroll, domNode);
-
     setTimeout(() => {
       const cellWidth = this.domNode.getAttribute('data-width');
       if (cellWidth) {
@@ -94,6 +93,16 @@ class TableCellContent extends Block {
     }
   }
 
+  optimize(...args) {
+    super.optimize(...args);
+    const cellWidth = this.domNode.getAttribute('data-width');
+    if (cellWidth && !this.parent.domNode.style.width) {
+      // 초기 렌더링시 cell 의 width를 지정해 준다.
+      this.parent.domNode.style.width = cellWidth;
+      this.parent.domNode.style.minWidth = cellWidth;
+    }
+  }
+
   cellOffset() {
     if (this.parent) {
       return this.parent.children.indexOf(this);
@@ -132,7 +141,6 @@ TableCellContent.blotName = 'table';
 TableCellContent.tagName = 'div';
 TableCellContent.className = 'td-content';
 
-/* new cell */
 class TableCell extends Container {
   constructor(scroll, domNode) {
     super(scroll, domNode);
@@ -281,7 +289,8 @@ TableBody.tagName = 'TBODY';
 class TableContainer extends Container {
   constructor(scroll, domNode) {
     super(scroll, domNode);
-    _.defer(() => {
+    domNode.style.width = 'calc(100% - 5px)';
+    setTimeout(() => {
       const rows = this.rows();
       if (!_.isEmpty(rows)) {
         let resized = false;
@@ -290,7 +299,8 @@ class TableContainer extends Container {
         });
         if (!resized) {
           this.domNode.style.tableLayout = 'fixed';
-          this.domNode.style.width = 'calc(100% - 5px)';
+        } else {
+          this.domNode.style.width = '';
         }
       }
     });
