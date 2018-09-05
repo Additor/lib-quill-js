@@ -440,22 +440,25 @@ class TableWrapper extends Container {
     super(scroll, domNode);
     domNode.id = tableId();
 
-    const leftTableCursorHelper = document.createElement('div');
-    const rightTableCursorHelper = document.createElement('div');
+    if (scroll.isEnabled()) {
+      const leftTableCursorHelper = document.createElement('div');
+      const rightTableCursorHelper = document.createElement('div');
 
-    leftTableCursorHelper.className = 'table-cursor-helper left';
-    rightTableCursorHelper.className = 'table-cursor-helper right';
-    leftTableCursorHelper.setAttribute('contenteditable', false);
-    rightTableCursorHelper.setAttribute('contenteditable', false);
+      leftTableCursorHelper.className = 'table-cursor-helper left';
+      rightTableCursorHelper.className = 'table-cursor-helper right';
+      leftTableCursorHelper.setAttribute('contenteditable', false);
+      rightTableCursorHelper.setAttribute('contenteditable', false);
 
-    domNode.appendChild(leftTableCursorHelper);
-    domNode.appendChild(rightTableCursorHelper);
+      domNode.appendChild(leftTableCursorHelper);
+      domNode.appendChild(rightTableCursorHelper);
 
-    leftTableCursorHelper.addEventListener('click', () => this.showFakeCursor(true));
-    rightTableCursorHelper.addEventListener('click', () => this.showFakeCursor(false));
+      leftTableCursorHelper.addEventListener('click', () => this.showFakeCursor(true));
+      rightTableCursorHelper.addEventListener('click', () => this.showFakeCursor(false));
+    }
   }
 
   showFakeCursor(left = true) {
+    if (!this.scroll.isEnabled()) return;
     let cursorParent;
     if (left) {
       cursorParent = this.domNode.querySelector('.table-cursor-helper.left');
