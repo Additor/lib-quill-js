@@ -307,7 +307,7 @@ Keyboard.DEFAULTS = {
       offset: 0,
       handler(range, context) {
         const { line } = context;
-        if (!line) return false;
+        if (!line || !line.prev) return false;
         return line.parent.length() > 1 || line.length() > 1;
       },
     },
@@ -319,6 +319,7 @@ Keyboard.DEFAULTS = {
         const anchorFormat = this.quill.getFormat(range.index);
         const focusFormat = this.quill.getFormat(range.index + range.length);
         if (!anchorFormat.table && !focusFormat.table) return true; // 양쪽 라인 모두 테이블셀이 아니면 return true;
+        if (anchorFormat.table && focusFormat.table) return true; // 양쪽 라인 모두 테이블셀이어도 return true;
         const lines = this.quill.getLines(range.index, range.length);
         if (range.index === 0) {
           this.quill.deleteText(range.index, range.length + 1, 'user');
