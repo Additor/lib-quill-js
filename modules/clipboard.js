@@ -125,10 +125,10 @@ class Clipboard extends Module {
       });
     }
 
-    const paragraphNodes = doc.getElementsByTagName('P');
-    _.forEach(paragraphNodes, paragraphNode => {
-      if (_.isEmpty(paragraphNode.childNodes)) {
-        paragraphNode.appendChild(document.createElement('BR'));
+    const domNodes = doc.body.getElementsByTagName('*');
+    _.forEach(domNodes, domNode => {
+      if (_.upperCase(domNode.tagName) !== 'BR' && _.isEmpty(domNode.childNodes)) {
+        domNode.appendChild(document.createElement('BR'));
       }
     });
 
