@@ -545,13 +545,13 @@ function expandConfig(container, userConfig) {
 // Handle selection preservation and TEXT_CHANGE emission
 // common to modification APIs
 function modify(modifier, source, index, shift) {
-  if (
-    !this.isEnabled() &&
-    source === Emitter.sources.USER &&
-    !this.allowReadOnlyEdits
-  ) {
-    return new Delta();
-  }
+  // if (
+  //   // !this.isEnabled() &&
+  //   source === Emitter.sources.USER
+  //   // !this.allowReadOnlyEdits
+  // ) {
+  //   return new Delta();
+  // }
   let range = index == null ? null : this.getSelection();
   const oldDelta = this.editor.delta;
   const change = modifier();
