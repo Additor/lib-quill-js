@@ -125,6 +125,13 @@ class Clipboard extends Module {
       });
     }
 
+    const paragraphNodes = doc.getElementsByTagName('P');
+    _.forEach(paragraphNodes, paragraphNode => {
+      if (_.isEmpty(paragraphNode.childNodes)) {
+        paragraphNode.appendChild(document.createElement('BR'));
+      }
+    });
+
     const container = doc.body;
     const nodeMatches = new WeakMap();
     const [elementMatchers, textMatchers] = this.prepareMatching(
@@ -199,6 +206,7 @@ class Clipboard extends Module {
     //   this.quill.uploader.upload(range, files);
     //   return;
     // }
+    debugger;
     const formats = this.quill.getFormat(range.index);
     const pastedDelta = this.convert({ text, html }, formats);
     debug.log('onPaste', pastedDelta, { text, html });
