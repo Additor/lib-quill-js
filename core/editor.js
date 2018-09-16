@@ -224,31 +224,18 @@ class Editor {
 }
 
 function convertListHTML(items, lastIndent, types) {
-  if (items.length === 0) {
-    const [endTag] = getListType(types.pop());
-    if (lastIndent <= 0) {
-      return `</li></${endTag}>`;
-    }
-    return `</li></${endTag}>${convertListHTML([], lastIndent - 1, types)}`;
-  }
-  const [{ child, offset, length, indent, type }, ...rest] = items;
-  const [tag, attribute] = getListType(type);
-  if (indent > lastIndent) {
-    types.push(tag);
-    return `<${tag}><li${attribute}>${convertHTML(
+  const html = items.reduce((result, curr) => {
+    const { child, offset, length, indent, type } = curr;
+    const attribute = type ? ` data-list="${type}"` : '';
+    const className = indent > 0 ? ` class="ql-indent-${indent}"` : '';
+    const liHtml = `<li${attribute}${className}>${convertHTML(
       child,
       offset,
       length,
-    )}${convertListHTML(rest, indent, types)}`;
-  } else if (indent === lastIndent) {
-    return `</li><li${attribute}>${convertHTML(
-      child,
-      offset,
-      length,
-    )}${convertListHTML(rest, indent, types)}`;
-  }
-  const [endTag] = getListType(types.pop());
-  return `</li></${endTag}>${convertListHTML(items, lastIndent - 1, types)}`;
+    )}</li>`;
+    return result + liHtml;
+  }, '');
+  return `<ol>${html}</ol>`;
 }
 
 function convertHTML(blot, index, length, isRoot = false) {

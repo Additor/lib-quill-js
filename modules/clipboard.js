@@ -178,6 +178,7 @@ class Clipboard extends Module {
   }
 
   onCopy(e, isCut = false) {
+    // return;
     if (e.defaultPrevented) return;
     e.preventDefault();
     const [range] = this.quill.selection.getRange();
@@ -193,11 +194,11 @@ class Clipboard extends Module {
   onPaste(e, range) {
     const html = e.clipboardData.getData('text/html');
     const text = e.clipboardData.getData('text/plain');
-    const files = Array.from(e.clipboardData.files || []);
-    if (!html && files.length > 0) {
-      this.quill.uploader.upload(range, files);
-      return;
-    }
+    // const files = Array.from(e.clipboardData.files || []);
+    // if (!html && files.length > 0) {
+    //   this.quill.uploader.upload(range, files);
+    //   return;
+    // }
     const formats = this.quill.getFormat(range.index);
     const pastedDelta = this.convert({ text, html }, formats);
     debug.log('onPaste', pastedDelta, { text, html });
