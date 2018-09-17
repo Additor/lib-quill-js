@@ -499,6 +499,17 @@ Keyboard.DEFAULTS = {
         return true;
       },
     },
+    'arrow up': {
+      key: 'ArrowUp',
+      format: ['list'],
+      handler(range, context) {
+        const firstLine = this.quill.getLine(0);
+        if (firstLine && firstLine[0]) {
+          return firstLine[0] !== context.line;
+        }
+        return true;
+      },
+    },
     backspace: {
       key: 'Backspace',
       collapsed: true,
