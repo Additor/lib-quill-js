@@ -75,7 +75,10 @@ class Block extends BlockBlot {
 
   insertBefore(blot, ref) {
     const { head } = this.children;
-    super.insertBefore(blot, ref);
+    const { composing } = this.scroll;
+
+    const insertDom = !composing;
+    super.insertBefore(blot, ref, insertDom);
     if (head instanceof Break) {
       head.remove();
     }

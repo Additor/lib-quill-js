@@ -613,7 +613,7 @@ function handleEnter(range, context) {
   if (range.length > 0) {
     this.quill.scroll.deleteAt(range.index, range.length); // So we do not trigger text-change
   }
-  if (window.gComposing) return;
+  if (this.quill.scroll.composing) return;
   this.quill.insertText(range.index, '\n', {}, Quill.sources.USER);
   // Earlier scroll.deleteAt might have messed up our selection,
   // so insertText's built in selection preservation is not reliable

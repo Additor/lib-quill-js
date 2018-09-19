@@ -14,6 +14,23 @@ class Scroll extends ScrollBlot {
     this.emitter = emitter;
     // Some reason fixes composition issues with character languages in Windows/Chrome, Safari
     this.domNode.addEventListener('DOMNodeInserted', () => {});
+    this.domNode.addEventListener('compositionstart', () => {
+      this.composing = true;
+    });
+    this.domNode.addEventListener('compositionupdate', () => {
+      this.composing = true;
+    });
+    this.domNode.addEventListener('compositionend', () => {
+      this.composing = false;
+    });
+    this.domNode.addEventListener('keydown', e => {
+      if (e.key !== 'Enter') this.composing = false;
+      else {
+        setTimeout(() => {
+          this.composing = false;
+        });
+      }
+    });
     this.optimize();
     this.enable();
   }
