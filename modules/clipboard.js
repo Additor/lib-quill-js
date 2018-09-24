@@ -206,7 +206,6 @@ class Clipboard extends Module {
     //   this.quill.uploader.upload(range, files);
     //   return;
     // }
-    debugger;
     const formats = this.quill.getFormat(range.index);
     const pastedDelta = this.convert({ text, html }, formats);
     debug.log('onPaste', pastedDelta, { text, html });

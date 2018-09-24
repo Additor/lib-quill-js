@@ -149,9 +149,9 @@ class Table extends Module {
     });
   }
 
-  fitTables() {
+  fitTables(force = false) {
     this.quill.scroll.descendants(TableContainer).forEach(table => {
-      table.fitCells();
+      table.fitCells(force);
     });
   }
 
