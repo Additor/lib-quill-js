@@ -80,7 +80,8 @@ class Block extends BlockBlot {
     const insertDom = !composing;
     super.insertBefore(blot, ref, insertDom);
     if (head instanceof Break) {
-      head.remove();
+      console.log('need head remove');
+      // head.remove();
     }
     this.cache = {};
   }

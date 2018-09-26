@@ -103,6 +103,12 @@ class TableCellContent extends Block {
     }
   }
 
+  insertLine() {
+    const value = TableCellContent.formats(this.domNode);
+    const newLine = this.scroll.create(TableCellContent.blotName, value);
+    this.insertBefore(newLine);
+  }
+
   cellOffset() {
     if (this.parent) {
       return this.parent.children.indexOf(this);
