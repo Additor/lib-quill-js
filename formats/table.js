@@ -361,11 +361,6 @@ class TableContainer extends Container {
         const newWidthString = `${newWidth}px`;
         child.domNode.style.width = newWidthString;
         child.domNode.style.minWidth = newWidthString;
-
-        const headCellContent = child.children.head;
-        if (headCellContent) {
-          // headCellContent.format('data-width', newWidthString);
-        }
       });
     }
   }
@@ -388,16 +383,57 @@ class TableContainer extends Container {
   insertColumn(index) {
     const [body] = this.descendant(TableBody);
     if (body == null || body.children.head == null) return;
-    body.children.forEach(row => {
-      const ref = row.children.at(index);
-      const targetCell = ref ? ref.prev || ref : row.children.tail;
-      const value = TableCellContent.formats(targetCell.children.head.domNode);
-      value['data-cell'] = cellId();
-      const cell = this.scroll.create(TableCellContent.blotName, value);
-      row.insertBefore(cell, ref);
-    });
-    if (this.domNode.offsetWidth <= Quill.DEFAULTS.minTableWidth) {
-      setTimeout(() => this.fitCells(true));
+
+    // calculate table width
+    const currTableWidth = this.domNode.offsetWidth;
+    const headRow = body.children.head;
+    const targetRowHeadCell = headRow.children.at(index);
+    const targetCell = targetRowHeadCell ?
+      targetRowHeadCell.prev || targetRowHeadCell : headRow.children.tail;
+    const targetCellFormats = TableCellContent.formats(targetCell.children.head.domNode);
+    if (targetCellFormats['data-width'] && currTableWidth <= Quill.DEFAULTS.minTableWidth) {
+      const rootWidth = this.scroll.domNode.offsetWidth - 5;
+      const cellWidth = _.toNumber(_.replace(targetCellFormats['data-width'], 'px', ''));
+      const adjustedCellWidth = (cellWidth / (currTableWidth + cellWidth)) * rootWidth;
+      targetCellFormats['data-width'] = `${Math.floor(adjustedCellWidth)}px`;
+      targetCellFormats['data-cell'] = cellId();
+      const cellToCreate = this.scroll.create(TableCellContent.blotName, targetCellFormats);
+
+      body.children.forEach(row => {
+        if (row === headRow) {
+          row.children.forEach(cell => {
+            const originWidth = Number.parseInt(cell.domNode.style.width.replace('px', ''));
+            const newWidth = (originWidth / (currTableWidth + cellWidth)) * rootWidth;
+            const newWidthString = `${newWidth}px`;
+
+            cell.children.head.format('data-width', newWidthString);
+            cell.domNode.style.width = newWidthString;
+            cell.domNode.style.minWidth = newWidthString;
+            if (cell === targetCell) {
+              cell.insertBefore(cellToCreate);
+            }
+          });
+        } else {
+          const ref = row.children.at(index);
+          const targetCell = ref ? ref.prev || ref : row.children.tail;
+          const value = TableCellContent.formats(targetCell.children.head.domNode);
+
+          value['data-cell'] = cellId();
+          const cell = this.scroll.create(TableCellContent.blotName, value);
+          row.insertBefore(cell, ref);
+        }
+      });
+      this.domNode.style.width = `${rootWidth}px`;
+    } else {
+      body.children.forEach(row => {
+        const ref = row.children.at(index);
+        const targetCell = ref ? ref.prev || ref : row.children.tail;
+        const value = TableCellContent.formats(targetCell.children.head.domNode);
+
+        value['data-cell'] = cellId();
+        const cell = this.scroll.create(TableCellContent.blotName, value);
+        row.insertBefore(cell, ref);
+      });
     }
   }
 
