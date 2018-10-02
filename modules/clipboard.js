@@ -273,7 +273,11 @@ function applyFormat(delta, format, value) {
     if (op.attributes && op.attributes[format]) {
       return newDelta.push(op);
     }
-    if (format === 'color' || format === 'background') {
+    if (
+      format === 'color' ||
+      format === 'background' ||
+      format === 'align'
+    ) {
       return newDelta.push(op);
     }
     return newDelta.insert(
