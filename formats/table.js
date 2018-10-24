@@ -471,7 +471,16 @@ class TableContainer extends Container {
 TableContainer.blotName = 'table-container';
 TableContainer.tagName = 'TABLE';
 
-class ScrollableTableContainer extends Container {}
+class ScrollableTableContainer extends Container {
+  constructor(scroll, domNode) {
+    super(scroll, domNode);
+    domNode.addEventListener('scroll', event => {
+      scroll.emitter.emit(Emitter.events.TABLE_SCROLL, {
+        event,
+      });
+    });
+  }
+}
 
 ScrollableTableContainer.blotName = 'scrollable-table-container';
 ScrollableTableContainer.className = 'scrollable-table-container';
