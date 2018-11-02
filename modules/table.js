@@ -24,6 +24,9 @@ class Table extends Module {
     Quill.register(TableContainer);
     Quill.register(ScrollableTableContainer);
     Quill.register(TableWrapper);
+    Quill.register('utils/cellId', cellId);
+    Quill.register('utils/rowId', rowId);
+    Quill.register('utils/tableId', tableId);
   }
 
   constructor(...args) {
@@ -276,8 +279,8 @@ class Table extends Module {
       mutations.some(mutation => {
         if (['TD', 'TR', 'TBODY', 'TABLE'].includes(mutation.target.tagName)) {
           this.quill.once(Quill.events.TEXT_CHANGE, (delta, old, source) => {
-            // if (source !== Quill.sources.USER) return;
-            this.balanceTables();
+            if (source !== Quill.sources.USER) return;
+            // this.balanceTables();
           });
           return true;
         }
