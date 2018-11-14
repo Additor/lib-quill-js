@@ -1,4 +1,5 @@
 import { Scope, ScrollBlot, ContainerBlot } from 'parchment';
+import _ from 'lodash';
 import Emitter from '../core/emitter';
 import Block, { BlockEmbed } from './block';
 import Break from './break';
@@ -169,6 +170,33 @@ class Scroll extends ScrollBlot {
     if (!Array.isArray(mutations)) {
       mutations = this.observer.takeRecords();
     }
+
+    const domControlError = _.some(mutations, mutation => {
+      let error = false;
+      if (!_.isEmpty(mutation.removedNodes)) {
+        const removedNode = mutation.removedNodes[0];
+        if (removedNode.nodeName === '#text') {
+          if (removedNode.nodeValue) {
+            error = true;
+          }
+        } else if (_.get(removedNode, 'childNodes[0].nodeName') === '#text') {
+          if (_.get(removedNode, 'childNodes[0].nodeValue')) {
+            error = true;
+          }
+        }
+      }
+      return error;
+    });
+
+    const isCharacterData = _.some(mutations, mutation => mutation.type === 'characterData');
+
+    if (domControlError && !isCharacterData) {
+      // dom 조작으로 인해 노트의 내용이 사라진 경우, scroll-error 이벤트를 emit 한다.
+      // characterData 가 존재하는 경우 유저가 조작한 케이스이므로 그 상황은 예외로 처리한다.
+      this.emitter.emit(Emitter.events.SCROLL_ERROR, source, mutations);
+      return;
+    }
+
     if (mutations.length > 0) {
       this.emitter.emit(Emitter.events.SCROLL_BEFORE_UPDATE, source, mutations);
     }
