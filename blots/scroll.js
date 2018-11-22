@@ -25,12 +25,16 @@ class Scroll extends ScrollBlot {
       this.composing = false;
     });
     this.domNode.addEventListener('keydown', e => {
+      this.keyPressed = true;
       if (e.key !== 'Enter') this.composing = false;
       else {
         setTimeout(() => {
           this.composing = false;
         });
       }
+    });
+    this.domNode.addEventListener('keyup', e => {
+      this.keyPressed = false;
     });
     this.optimize();
     this.enable();
@@ -190,7 +194,7 @@ class Scroll extends ScrollBlot {
 
     const isCharacterData = _.some(mutations, mutation => mutation.type === 'characterData');
 
-    if (domControlError && !isCharacterData) {
+    if (domControlError && !isCharacterData && !this.keyPressed) {
       // dom 조작으로 인해 노트의 내용이 사라진 경우, scroll-error 이벤트를 emit 한다.
       // characterData 가 존재하는 경우 유저가 조작한 케이스이므로 그 상황은 예외로 처리한다.
       this.emitter.emit(Emitter.events.SCROLL_ERROR, source, mutations);
