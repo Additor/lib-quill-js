@@ -180,7 +180,14 @@ class Scroll extends ScrollBlot {
       if (!_.isEmpty(mutation.removedNodes)) {
         const removedNode = mutation.removedNodes[0];
         if (removedNode.nodeName === '#text') {
-          if (removedNode.nodeValue) {
+          if (
+            removedNode.nodeValue &&
+            !_.invoke(
+              removedNode,
+              'parentElement.parentElement.classList.contains',
+              'ql-code-block',
+            )
+          ) {
             error = true;
           }
         } else if (_.get(removedNode, 'childNodes[0].nodeName') === '#text') {
