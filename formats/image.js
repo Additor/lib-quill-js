@@ -1,30 +1,52 @@
 import { EmbedBlot } from 'parchment';
 import { sanitize } from '../formats/link';
 
-const ATTRIBUTES = ['alt', 'height', 'width'];
 const ImageFormatAttributesList = [
   'alt',
   'height',
   'width',
   'style',
+  'image-style',
+  'caption',
 ];
 
-class Image extends EmbedBlot {
+class AdditorImage extends EmbedBlot {
   static create(value) {
     const node = super.create(value);
-    if (typeof value === 'string') {
-      node.setAttribute('src', this.sanitize(value));
-    }
-    return node;
-  }
 
-  static formats(domNode) {
-    return ATTRIBUTES.reduce((formats, attribute) => {
-      if (domNode.hasAttribute(attribute)) {
-        formats[attribute] = domNode.getAttribute(attribute);
+    // image
+    node.setAttribute(
+      'id',
+      `img_${Math.random()
+        .toString(36)
+        .substr(2, 9)}`,
+    );
+
+    const image = document.createElement('IMG');
+    if (typeof value === 'string') {
+      image.setAttribute('src', this.sanitize(value));
+    }
+    node.appendChild(image);
+
+    // caption
+    const captionInput = document.createElement('INPUT');
+    captionInput.addEventListener('click', ev => {
+      ev.stopPropagation();
+    });
+    captionInput.addEventListener('keydown', ev => {
+      if (ev.keyCode === 13 || ev.keyCode === 9 || ev.keyCode === 27) { // Enter, Tab, Escape
+        ev.preventDefault();
+      } else {
+        ev.stopPropagation();
       }
-      return formats;
-    }, {});
+    });
+    captionInput.setAttribute('type', 'text');
+    captionInput.setAttribute('placeholder', 'Write a caption');
+    captionInput.setAttribute('class', 'caption');
+    captionInput.setAttribute('spellcheck', 'false');
+    node.appendChild(captionInput);
+    node.setAttribute('contenteditable', 'false');
+    return node;
   }
 
   static match(url) {
@@ -45,11 +67,53 @@ class Image extends EmbedBlot {
   }
 
   static value(domNode) {
-    return domNode.getAttribute('src');
+    return domNode.getElementsByTagName('IMG')[0].getAttribute('src');
+  }
+
+  static formats(domNode) {
+    const imageNode = domNode.getElementsByTagName('IMG')[0];
+    return ImageFormatAttributesList.reduce((formats, attribute) => {
+      if (attribute === 'caption') {
+        formats[attribute] = imageNode.getAttribute(attribute) || '';
+        return formats;
+      }
+
+      if (attribute === 'image-style') {
+        if (imageNode.hasAttribute(attribute)) {
+          formats[attribute] = imageNode.getAttribute(attribute);
+        }
+        return formats;
+      }
+
+      if (domNode.hasAttribute(attribute)) {
+        formats[attribute] = domNode.getAttribute(attribute);
+      }
+
+      return formats;
+    }, {});
   }
 
   format(name, value) {
-    if (ATTRIBUTES.indexOf(name) > -1) {
+    if (ImageFormatAttributesList.indexOf(name) > -1) {
+      if (name === 'caption') {
+        const captionInput = this.domNode.getElementsByTagName('INPUT')[0];
+        if (captionInput) {
+          captionInput.setAttribute('value', value);
+        }
+      }
+
+      if (name === 'image-style' || name === 'width' || name === 'height') {
+        const imageNode = this.domNode.getElementsByTagName('IMG')[0];
+        if (value) {
+          imageNode.setAttribute(
+            name,
+            _.replace(value, 'visibility: hidden;', ''),
+          ); // visibility 가 hidden 일 경우 제거해줌
+        } else {
+          imageNode.removeAttribute(name);
+        }
+      }
+
       if (value) {
         this.domNode.setAttribute(name, value);
       } else {
@@ -60,36 +124,9 @@ class Image extends EmbedBlot {
     }
   }
 }
-Image.blotName = 'image';
-Image.tagName = 'IMG';
 
-class AdditorImage extends Image {
-  constructor(scroll, domNode) {
-    super(scroll, domNode);
-    domNode.setAttribute('id', `img_${Math.random().toString(36).substr(2, 9)}`);
-  }
-  static formats(domNode) {
-    return ImageFormatAttributesList.reduce(function(formats, attribute) {
-      if (domNode.hasAttribute(attribute)) {
-        let attr = domNode.getAttribute(attribute);
-        if (attribute === 'style') attr = _.replace(attr, 'visibility: hidden;', '');
-        formats[attribute] = attr;
-      }
-      return formats;
-    }, {});
-  }
-  format(name, value) {
-    if (ImageFormatAttributesList.indexOf(name) > -1) {
-      if (value) {
-        this.domNode.setAttribute(name, _.replace(value, 'visibility: hidden;', '')); // visibility 가 hidden 일 경우 제거해줌
-      } else {
-        this.domNode.removeAttribute(name);
-      }
-    } else {
-      super.format(name, value);
-    }
-  }
-}
+AdditorImage.tagName = 'DIV';
+AdditorImage.blotName = 'image';
 AdditorImage.className = 'ql-img';
 
 export default AdditorImage;
