@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import clone from 'clone';
 import equal from 'deep-equal';
 import extend from 'extend';
@@ -184,22 +185,28 @@ Keyboard.DEFAULTS = {
     indent: {
       // highlight tab or tab at beginning of list, indent or blockquote
       key: 'Tab',
-      format: ['blockquote', 'indent', 'list'],
       handler(range, context) {
-        if (context.collapsed && context.offset !== 0) return true;
-        this.quill.format('indent', '+1', Quill.sources.USER);
-        return false;
+        const { format, collapsed, offset } = context;
+        if (collapsed && offset !== 0) return true;
+        if (_.isEmpty(format) || format.header || format.indent || format.list) {
+          this.quill.format('indent', '+1', Quill.sources.USER);
+          return false;
+        }
+        return true;
       },
     },
     outdent: {
       key: 'Tab',
       shiftKey: true,
-      format: ['blockquote', 'indent', 'list'],
       // highlight tab or tab at beginning of list, indent or blockquote
       handler(range, context) {
-        if (context.collapsed && context.offset !== 0) return true;
-        this.quill.format('indent', '-1', Quill.sources.USER);
-        return false;
+        const { format, collapsed, offset } = context;
+        if (collapsed && offset !== 0) return true;
+        if (_.isEmpty(format) || format.header || format.indent || format.list) {
+          this.quill.format('indent', '-1', Quill.sources.USER);
+          return false;
+        }
+        return true;
       },
     },
     'outdent backspace': {
