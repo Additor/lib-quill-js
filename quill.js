@@ -28,7 +28,7 @@ import Strike from './formats/strike';
 import Underline from './formats/underline';
 
 import Formula from './formats/formula';
-import Image from './formats/image';
+import ImageFormats from './formats/image';
 import Video from './formats/video';
 
 import CodeBlock, { Code as InlineCode } from './formats/code';
@@ -36,6 +36,7 @@ import CodeBlock, { Code as InlineCode } from './formats/code';
 import Syntax from './modules/syntax';
 import Table from './modules/table';
 import Toolbar from './modules/toolbar';
+import ImageModule from './modules/image';
 
 import Icons from './ui/icons';
 import Picker from './ui/picker';
@@ -92,7 +93,7 @@ Quill.register(
     'formats/underline': Underline,
 
     'formats/formula': Formula,
-    'formats/image': Image,
+    'formats/image': ImageFormats,
     'formats/video': Video,
 
     'formats/embed': AdditorEmbed,
@@ -101,6 +102,8 @@ Quill.register(
     'modules/syntax': Syntax,
     'modules/table': Table,
     'modules/toolbar': Toolbar,
+
+    'modules/image': ImageModule,
 
     'themes/bubble': BubbleTheme,
     'themes/snow': SnowTheme,

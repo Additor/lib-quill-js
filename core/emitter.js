@@ -56,6 +56,7 @@ Emitter.events = {
   TEXT_CHANGE: 'text-change',
   TABLE_FOCUS: 'table-focus',
   TABLE_SCROLL: 'table-scroll',
+  IMAGE_FOCUS: 'image-focus',
 };
 Emitter.sources = {
   API: 'api',

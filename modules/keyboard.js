@@ -7,6 +7,7 @@ import { EmbedBlot, TextBlot } from 'parchment';
 import Quill from '../core/quill';
 import logger from '../core/logger';
 import Module from '../core/module';
+import AdditorImage from '../formats/image';
 
 const debug = logger('quill:keyboard');
 
@@ -448,14 +449,7 @@ Keyboard.DEFAULTS = {
       offset: 0,
       handler(range, context) {
         // 이전 blot 이 TableWrapper 이면 fakeCursor 를 보여줌
-        if (!context.format.table) {
-          const [prevLine] = this.quill.getLine(range.index - 1);
-          if (prevLine.statics.blotName === 'table') {
-            const tableWrapper = prevLine.tableWrapper();
-            tableWrapper.showFakeCursor(false);
-            return false;
-          }
-        } else {
+        if (context.format.table) {
           const { line: currLine } = context;
           if (
             !currLine.parent.prev &&
@@ -466,6 +460,24 @@ Keyboard.DEFAULTS = {
             tableWrapper.showFakeCursor();
             return false;
           }
+        } else {
+          const [prevLine] = this.quill.getLine(range.index - 1);
+          if (prevLine.statics.blotName === 'table') {
+            const tableWrapper = prevLine.tableWrapper();
+            tableWrapper.showFakeCursor(false);
+            return false;
+          }
+
+          const { head: firstChild, tail: lastChild } = prevLine.children;
+          if (
+            firstChild &&
+            lastChild &&
+            firstChild === lastChild &&
+            firstChild instanceof AdditorImage
+          ) {
+            firstChild.showFakeCursor(false);
+            return false;
+          }
         }
         return true;
       },
@@ -474,14 +486,7 @@ Keyboard.DEFAULTS = {
       key: 'ArrowRight',
       collapsed: true,
       handler(range, context) {
-        if (!context.format.table) {
-          const [nextLine] = this.quill.getLine(range.index + 1);
-          if (nextLine.statics.blotName === 'table') {
-            const tableWrapper = nextLine.tableWrapper();
-            tableWrapper.showFakeCursor();
-            return false;
-          }
-        } else {
+        if (context.format.table) {
           const { offset, line: currLine } = context;
           const lineLength = currLine.length();
           if (
@@ -495,7 +500,26 @@ Keyboard.DEFAULTS = {
             tableWrapper.showFakeCursor(false);
             return false;
           }
+        } else {
+          const [nextLine] = this.quill.getLine(range.index + 1);
+          if (nextLine.statics.blotName === 'table') {
+            const tableWrapper = nextLine.tableWrapper();
+            tableWrapper.showFakeCursor();
+            return false;
+          }
+
+          const { head: firstChild, tail: lastChild } = nextLine.children;
+          if (
+            firstChild &&
+            lastChild &&
+            firstChild === lastChild &&
+            firstChild instanceof AdditorImage
+          ) {
+            firstChild.showFakeCursor();
+            return false;
+          }
         }
+
         return true;
       },
     },
@@ -519,6 +543,20 @@ Keyboard.DEFAULTS = {
           if (prevLine.statics.blotName === 'table') {
             const tableWrapper = prevLine.tableWrapper();
             tableWrapper.showFakeCursor(false);
+            if (context.line.length() === 1) {
+              context.line.remove();
+            }
+            return false;
+          }
+
+          const { head: firstChild, tail: lastChild } = prevLine.children;
+          if (
+            firstChild &&
+            lastChild &&
+            firstChild === lastChild &&
+            firstChild instanceof AdditorImage
+          ) {
+            firstChild.showFakeCursor(false);
             if (context.line.length() === 1) {
               context.line.remove();
             }
@@ -670,6 +708,11 @@ function makeEmbedArrowHandler(key, shiftKey) {
       }
       const [leaf] = this.quill.getLeaf(index);
       if (!(leaf instanceof EmbedBlot)) return true;
+      if (leaf instanceof AdditorImage) {
+        leaf.showFakeCursor(false);
+        return false;
+      }
+
       if (key === 'ArrowLeft') {
         if (shiftKey) {
           this.quill.setSelection(

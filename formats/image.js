@@ -1,5 +1,6 @@
 import { EmbedBlot } from 'parchment';
 import { sanitize } from '../formats/link';
+import Emitter from '../core/emitter';
 
 const ImageFormatAttributesList = [
   'alt',
@@ -8,6 +9,7 @@ const ImageFormatAttributesList = [
   'style',
   'image-style',
   'caption',
+  'ratio', // width / height
 ];
 
 class AdditorImage extends EmbedBlot {
@@ -22,11 +24,21 @@ class AdditorImage extends EmbedBlot {
         .substr(2, 9)}`,
     );
 
+    const imageWrapper = document.createElement('DIV');
+
+    const cursorLeft = document.createElement('div');
+    cursorLeft.classList.add('cursor', 'left');
+    const cursorRight = document.createElement('div');
+    cursorRight.classList.add('cursor', 'right');
+
+    imageWrapper.appendChild(cursorLeft);
+    imageWrapper.appendChild(cursorRight);
+
     const image = document.createElement('IMG');
     if (typeof value === 'string') {
       image.setAttribute('src', this.sanitize(value));
     }
-    node.appendChild(image);
+    imageWrapper.appendChild(image);
 
     // caption
     const captionInput = document.createElement('INPUT');
@@ -34,7 +46,8 @@ class AdditorImage extends EmbedBlot {
       ev.stopPropagation();
     });
     captionInput.addEventListener('keydown', ev => {
-      if (ev.keyCode === 13 || ev.keyCode === 9 || ev.keyCode === 27) { // Enter, Tab, Escape
+      // Enter, Tab, Escape
+      if (ev.keyCode === 13 || ev.keyCode === 9 || ev.keyCode === 27) {
         ev.preventDefault();
       } else {
         ev.stopPropagation();
@@ -44,7 +57,18 @@ class AdditorImage extends EmbedBlot {
     captionInput.setAttribute('placeholder', 'Write a caption');
     captionInput.setAttribute('class', 'caption');
     captionInput.setAttribute('spellcheck', 'false');
-    node.appendChild(captionInput);
+    imageWrapper.appendChild(captionInput);
+
+    const dropHelperLeft = document.createElement('div');
+    dropHelperLeft.classList.add('image-drop-helper', 'left');
+
+    const dropHelperRight = document.createElement('div');
+    dropHelperRight.classList.add('image-drop-helper', 'right');
+
+    node.appendChild(dropHelperLeft);
+    node.appendChild(dropHelperRight);
+    node.appendChild(imageWrapper);
+
     node.setAttribute('contenteditable', 'false');
     return node;
   }
@@ -104,13 +128,19 @@ class AdditorImage extends EmbedBlot {
         }
       }
 
-      if (name === 'image-style' || name === 'width' || name === 'height') {
+      if (name === 'image-style' || name === 'width' || name === 'height' || name === 'ratio') {
         const imageNode = this.domNode.getElementsByTagName('IMG')[0];
         if (value) {
           imageNode.setAttribute(
             name,
             _.replace(value, 'visibility: hidden;', ''),
           ); // visibility 가 hidden 일 경우 제거해줌
+          if (name === 'width') {
+            const captionInput = this.domNode.querySelector('.caption');
+            if (captionInput) {
+              captionInput.style.width = `${value}px`;
+            }
+          }
         } else {
           imageNode.removeAttribute(name);
         }
@@ -124,6 +154,40 @@ class AdditorImage extends EmbedBlot {
     } else {
       super.format(name, value);
     }
+  }
+
+  showFakeCursor(isLeft = true) {
+    this.hideFakeCursor();
+    const width = this.domNode.getAttribute('width');
+    const height = width / this.domNode.getAttribute('ratio');
+    let cursor = null;
+    if (isLeft) {
+      cursor = this.domNode.querySelector('.cursor.left');
+      cursor.style.left = `calc(50% - ${width / 2 + 5}px)`;
+    } else {
+      cursor = this.domNode.querySelector('.cursor.right');
+      cursor.style.right = `calc(50% - ${width / 2 + 5}px)`;
+    }
+    cursor.style.display = 'block';
+    cursor.style.height = `${height}px`;
+    setTimeout(() => {
+      this.scroll.domNode.blur();
+      this.scroll.emitter.once(Emitter.events.SELECTION_CHANGE, () => {
+        this.hideFakeCursor();
+      });
+      this.scroll.emitter.emit(Emitter.events.IMAGE_FOCUS, {
+        blot: this,
+        cursorOffset: isLeft ? 0 : 1,
+      });
+    });
+  }
+
+  hideFakeCursor() {
+    const cursors = this.domNode.querySelectorAll('.cursor');
+    cursors.forEach(cursor => {
+      cursor.style.display = 'none';
+    });
+    this.scroll.emitter.emit(Emitter.events.IMAGE_FOCUS, undefined);
   }
 }
 
