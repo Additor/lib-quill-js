@@ -6,6 +6,7 @@ import {
   DirectionClass,
   DirectionStyle,
 } from './formats/direction';
+import StartAttribute from './formats/start';
 import Indent from './formats/indent';
 
 import Blockquote from './formats/blockquote';
@@ -49,6 +50,7 @@ import SnowTheme from './themes/snow';
 Quill.register(
   {
     'attributors/attribute/direction': DirectionAttribute,
+    'attributors/attribute/start': StartAttribute,
 
     'attributors/class/align': AlignClass,
     'attributors/class/background': BackgroundClass,
@@ -72,6 +74,7 @@ Quill.register(
     'formats/align': AlignClass,
     'formats/direction': DirectionClass,
     'formats/indent': Indent,
+    'formats/start': StartAttribute,
 
     'formats/background': BackgroundStyle,
     'formats/color': ColorStyle,
