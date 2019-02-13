@@ -45,6 +45,26 @@ class ListItem extends Block {
   format(name, value) {
     if (name === this.statics.blotName && value) {
       this.domNode.setAttribute('data-list', value);
+      if (value !== 'ordered' && !this.uiNode) {
+        // ordered list 가 아닌 다른 list 로 변경시 uiNode 를 새로 붙여줌
+        const ui = this.domNode.ownerDocument.createElement('span');
+        const listEventHandler = () => {
+          if (!this.scroll.isEnabled()) return;
+          const format = this.statics.formats(this.domNode, this.scroll);
+          if (format === 'checked') {
+            this.format('list', 'unchecked');
+          } else if (format === 'unchecked') {
+            this.format('list', 'checked');
+          }
+        };
+        ui.addEventListener('mousedown', listEventHandler);
+        ui.addEventListener('touchstart', listEventHandler);
+        this.attachUI(ui);
+      } else if (value === 'ordered' && this.uiNode) {
+        // ordered list 로 변경시 uiNode 를 제거해 줌
+        this.uiNode.remove();
+        delete this.uiNode;
+      }
     } else {
       super.format(name, value);
     }
