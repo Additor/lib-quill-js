@@ -35,7 +35,11 @@ class ListItem extends Block {
     };
     ui.addEventListener('mousedown', listEventHandler);
     ui.addEventListener('touchstart', listEventHandler);
-    this.attachUI(ui);
+    if (domNode.getAttribute('data-list') !== 'ordered') {
+      // ordered 에서만 다른 리스트와 달리 해당 ui 가 마우스로 선택되는 현상이 발생함
+      // 이것을 막기 위해서 ordered list 에서는 ui 를 붙이지 않음
+      this.attachUI(ui);
+    }
   }
 
   format(name, value) {
