@@ -33,7 +33,7 @@ class Image extends Module {
     const imageLastIndex = imageIndex + blot.length();
     const quillLength = this.quill.getLength();
     let prevented = false;
-    switch (ev.keyCode) {
+    switch (ev.keyCode) { //TODO: shift selection 처리 필요
       case 37: // arrow left
         if (cursorOffset === 0) {
           if (imageIndex > 0) {
@@ -91,6 +91,22 @@ class Image extends Module {
           this.quill.setSelection(imageIndex, Quill.sources.SILENT);
         }
         prevented = true;
+        break;
+      case 46: // delete
+        if (cursorOffset === 0) {
+          blot.remove();
+          this.quill.update(Quill.sources.USER);
+          this.quill.setSelection(imageIndex, Quill.sources.SILENT);
+        } else {
+          if (imageLastIndex < quillLength) {
+            const [line] = this.quill.getLine(imageIndex + 1);
+            if (line.length() <= 1) {
+              line.remove();
+            } else {
+              this.quill.setSelection(imageIndex + 1, 0, Quill.sources.USER);
+            }
+          }
+        }
         break;
       default:
     }

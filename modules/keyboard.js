@@ -468,6 +468,11 @@ Keyboard.DEFAULTS = {
             return false;
           }
 
+          if (prevLine.statics.blotName === 'image-grid') {
+            prevLine.showFakeCursor(-1);
+            return false;
+          }
+
           const { head: firstChild, tail: lastChild } = prevLine.children;
           if (
             firstChild &&
@@ -508,6 +513,11 @@ Keyboard.DEFAULTS = {
             return false;
           }
 
+          if (nextLine.statics.blotName === 'image-grid') {
+            nextLine.showFakeCursor();
+            return false;
+          }
+
           const { head: firstChild, tail: lastChild } = nextLine.children;
           if (
             firstChild &&
@@ -519,7 +529,6 @@ Keyboard.DEFAULTS = {
             return false;
           }
         }
-
         return true;
       },
     },
@@ -543,6 +552,14 @@ Keyboard.DEFAULTS = {
           if (prevLine.statics.blotName === 'table') {
             const tableWrapper = prevLine.tableWrapper();
             tableWrapper.showFakeCursor(false);
+            if (context.line.length() === 1) {
+              context.line.remove();
+            }
+            return false;
+          }
+
+          if (prevLine.statics.blotName === 'image-grid') {
+            prevLine.showFakeCursor(-1);
             if (context.line.length() === 1) {
               context.line.remove();
             }
