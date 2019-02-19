@@ -55,7 +55,6 @@ class TableCellContent extends Block {
     if (value['data-width']) {
       node.setAttribute('data-width', value['data-width']);
     }
-
     return node;
   }
 
