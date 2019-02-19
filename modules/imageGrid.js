@@ -8,7 +8,6 @@ import ImageGridFormat from '../formats/imageGrid';
 class ImageGrid extends Module {
   static register() {
     Quill.register(ImageGridFormat);
-    // Quill.register('utils/functionName', functionName);
   }
 
   constructor(...args) {
@@ -76,8 +75,7 @@ class ImageGrid extends Module {
           const delta = new Delta().retain(imageGridIndex).insert('\n');
           this.quill.updateContents(delta, 'user');
         } else {
-          this.splitImageGrid();
-          console.log('TODO: 1. 현재 포커스 위치 찾고 2. 이미지/이미지그리드 이미지그리드/이미지 이미지/이미지 셋 중 하나의 형태로 분리한다. 3. 사이에 개행을 추가한다');
+          this.splitImageGrid(cursorOffset);
         }
         prevented = true;
         break;
@@ -145,29 +143,96 @@ class ImageGrid extends Module {
       };
     });
 
-    const originImageIndex = this.quill.getIndex(originBlot);
     const targetImageIndex = this.quill.getIndex(targetImageBlot);
-    const imageGridDelta = new Delta()
-      .retain(targetImageIndex)
-      .insert(
-        {
-          'image-grid': {
-            data: imageGridData,
-          },
+    const imageGridDelta = new Delta().retain(targetImageIndex).insert(
+      {
+        'image-grid': {
+          data: imageGridData,
         },
-        {},
-      )
-      .delete(2);
+      },
+      {},
+    );
+    originBlot.remove();
+    targetImageBlot.remove();
     this.quill.updateContents(imageGridDelta, 'user');
   }
 
-  splitImageGrid(splitCursorIndex) {
-    // delta() data 꺼내와서 clone 후 splice
-    // 길이 하나이면 Image delta 만들고, 2개이상이면 grid 만든다
+  // deleteAndSplitImageGrid(dropPositionIndex, blotWillBeRemoved) {
+  //   console.log('insertHere!!', dropPositionIndex);
+  //   console.log('delete!!', blotWillBeRemoved);
+  // }
+
+  makeDelta(images) {
+    const delta = [];
+    if (images.length === 1) {
+      // AdditorImage
+      delta.push({
+        image: images[0].image,
+      });
+      delta.push(images[0].attributes);
+    } else {
+      // ImageGrid
+      delta.push({
+        'image-grid': { data: images },
+      });
+    }
+    return delta;
   }
 
-  // insertImageToImageGrid() {
-  // }
+  splitImageGrid(splitCursorIndex) {
+    const { blot } = this.imageGridFocusData;
+
+    const originImageGridIndex = this.quill.getIndex(blot);
+    const {
+      'image-grid': { data: beforeData },
+    } = blot.delta().ops[0].insert;
+
+    const dataLeft = beforeData.slice(0, splitCursorIndex);
+    const dataRight = beforeData.slice(splitCursorIndex, beforeData.length);
+
+    const deltaLeft = this.makeDelta(dataLeft);
+    const deltaRight = this.makeDelta(dataRight);
+
+    if (deltaLeft.length === 0 || deltaRight.length === 0) {
+      return;
+    }
+
+    const updateDelta = new Delta()
+      .retain(originImageGridIndex)
+      .insert(...deltaLeft)
+      .insert('\n')
+      .insert(...deltaRight)
+      .insert('\n');
+    blot.remove();
+    this.quill.updateContents(updateDelta, 'user');
+    // TODO: 앞 이미지의 fakeCursor 보여주기
+  }
+
+  insertImageToImageGrid(targetBlot, newImageBlot, dropedPositionIndex) {
+    const {
+      'image-grid': { data: beforeData },
+    } = targetBlot.delta().ops[0].insert;
+
+    const newImageData = {
+      image: newImageBlot.domNode.querySelector('IMG').getAttribute('src'),
+      attributes: newImageBlot.formats(),
+    };
+    const originImageGridIndex = this.quill.getIndex(targetBlot);
+
+    const dataLeft = beforeData.slice(0, dropedPositionIndex);
+    const dataRight = beforeData.slice(dropedPositionIndex, beforeData.length);
+
+    const afterData = [...dataLeft, newImageData, ...dataRight];
+
+    const updateDelta = new Delta().retain(originImageGridIndex).insert({
+      'image-grid': {
+        data: afterData,
+      },
+    });
+    targetBlot.remove();
+    newImageBlot.remove();
+    this.quill.updateContents(updateDelta, 'user');
+  }
 
   // removeImageFromImageGrid() {
   // }
