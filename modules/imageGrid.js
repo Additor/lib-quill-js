@@ -38,7 +38,7 @@ class ImageGrid extends Module {
       // TODO: shift selection 처리 필요
       case 37: // arrow left
         if (cursorOffset === 0) {
-          if (imageGridIndex > 0) {
+          if (imageGridIndex > 0) { // TODO: 앞에있는놈이 이미지인경우 처리 필요
             this.quill.setSelection(imageGridIndex - 1, 0, Quill.sources.USER);
           }
         } else {
@@ -80,12 +80,7 @@ class ImageGrid extends Module {
         prevented = true;
         break;
       case 8: // backspace
-        if (cursorOffset === maxCursorOffset) {
-          // TODO: else 케이스에 포함되어야함.. 그리드에서는 블랏 동째로 한꺼번에 지우는건 없음
-          blot.remove();
-          this.quill.update(Quill.sources.USER);
-          this.quill.setSelection(imageGridIndex, Quill.sources.SILENT);
-        } else if (cursorOffset === 0) {
+        if (cursorOffset === 0) {
           if (imageGridIndex > 0) {
             const [line] = this.quill.getLine(imageGridIndex - 1);
             if (line.length() <= 1) {
@@ -95,7 +90,7 @@ class ImageGrid extends Module {
             }
           }
         } else {
-          console.log('TODO: 1. 현재 포커스 위치 찾고 2. 왼쪽에 있는 이미지 하나를 지운다 3. 여전히 그리드인지 확인하고 그리드가 더이상 아니게 되면(이미지 길이 하나) 이미지 블랏으로 변경한다.');
+          this.removeImageFromImageGrid(blot, cursorOffset - 1);
         }
         prevented = true;
         break;
@@ -109,13 +104,8 @@ class ImageGrid extends Module {
               this.quill.setSelection(imageGridIndex + 1, 0, Quill.sources.USER);
             }
           }
-        } else if (cursorOffset === 0) {
-          // TODO: else 케이스에 포함되어야 함.. 그리드에서는 블랏 통째로 한꺼번에 지우는 것 없음.
-          blot.remove();
-          this.quill.update(Quill.sources.USER);
-          this.quill.setSelection(imageGridIndex, Quill.sources.SILENT);
         } else {
-          console.log('TODO: 1. 현재 포커스 위치 찾고 2. 오른쪽에 있는 이미지 하나를 지운다 3. 여전히 그리드인지 확인하고 그리드가 더이상 아니게 되면(이미지 길이 하나) 이미지 블랏으로 변경한다.');
+          this.removeImageFromImageGrid(blot, cursorOffset);
         }
         break;
       default:
@@ -156,11 +146,6 @@ class ImageGrid extends Module {
     targetImageBlot.remove();
     this.quill.updateContents(imageGridDelta, 'user');
   }
-
-  // deleteAndSplitImageGrid(dropPositionIndex, blotWillBeRemoved) {
-  //   console.log('insertHere!!', dropPositionIndex);
-  //   console.log('delete!!', blotWillBeRemoved);
-  // }
 
   makeDelta(images) {
     const delta = [];
@@ -262,13 +247,49 @@ class ImageGrid extends Module {
         data: afterData,
       },
     });
-    console.log(updateDelta);
     targetBlot.remove();
     this.quill.updateContents(updateDelta, 'user');
   }
 
-  // removeImageFromImageGrid() {
-  // }
+  removeImageFromImageGrid(imageGridBlot, removeIndex, pasteTargetBlot) {
+    const {
+      'image-grid': { data: beforeData },
+    } = imageGridBlot.delta().ops[0].insert;
+
+    const afterData = [...beforeData];
+    const [removedItem] = afterData.splice(removeIndex, 1);
+
+    const targetBlotIndex = this.quill.getIndex(imageGridBlot);
+
+    if (afterData.length > 1) {
+      const updateDelta = new Delta().retain(targetBlotIndex).insert({
+        'image-grid': {
+          data: afterData,
+        },
+      });
+      imageGridBlot.remove();
+      this.quill.updateContents(updateDelta, 'user');
+    } else {
+      const { image, attributes } = afterData[0];
+      const updateDelta = new Delta()
+        .retain(targetBlotIndex)
+        .insert({ image }, attributes)
+        .insert('\n');
+      imageGridBlot.remove();
+      this.quill.updateContents(updateDelta, 'user');
+    }
+
+    if (removedItem && pasteTargetBlot) {
+      const targetIndex = this.quill.getIndex(pasteTargetBlot);
+      const { image, attributes } = removedItem;
+      const imageInsertDelta = new Delta()
+        .retain(targetIndex)
+        .insert({ image }, attributes)
+        .insert('\n');
+      this.quill.updateContents(imageInsertDelta, 'user');
+    }
+    // this.quill.setSelection(index, 0, Quill.sources.USER); // TODO: 키보드로 지운 경우 기존 커서 유지해줘야함... (fakeCursor인경우에는?)
+  }
 
   listenImageGridFocus() {
     this.quill.on(Quill.events.IMAGE_GRID_FOCUS, data => {
