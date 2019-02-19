@@ -3,6 +3,8 @@ import Emitter from '../core/emitter';
 import Quill from '../core/quill';
 import { BlockEmbed } from '../blots/block';
 
+const MAX_IMAGE_LENGTH = 3;
+
 class ImageGrid extends BlockEmbed {
   constructor(scroll, domNode) {
     super(scroll, domNode);
@@ -17,6 +19,64 @@ class ImageGrid extends BlockEmbed {
     const cursor = document.createElement('div');
     cursor.classList.add('vertical-bar', 'cursor');
     node.appendChild(cursor);
+
+    const guideline = document.createElement('div');
+    guideline.classList.add('vertical-bar', 'guideline');
+    node.appendChild(guideline);
+
+    const dropHelperWrapper = document.createElement('div');
+    dropHelperWrapper.classList.add('image-grid-drop-helper-wrapper');
+
+    function showGuideline(index) {
+      const { height } = node.querySelector('.ql-img img').getBoundingClientRect();
+      let leftPosition = '';
+      if (index === 0) {
+        leftPosition = '-5px';
+      } else {
+        let sumOfWidths = -5;
+        node.querySelectorAll('.ql-img').forEach((img, i) => {
+          if (i < index) {
+            sumOfWidths += img.getBoundingClientRect().width + 8;
+          }
+        });
+        leftPosition = `${sumOfWidths}px`;
+      }
+
+      const guidelineElement = node.querySelector('.guideline');
+      guidelineElement.style.left = leftPosition;
+      guidelineElement.style.height = `${height}px`;
+      guidelineElement.style.display = 'block';
+    }
+
+    function hideDropHelper() {
+      const guidelineElement = node.querySelector('.guideline');
+      guidelineElement.style.display = 'none';
+      const dropHelperWrapperElement = node.querySelector('.image-grid-drop-helper-wrapper');
+      dropHelperWrapperElement.style.display = 'none';
+    }
+
+    for (let i = 0; i <= data.length; i++) {
+      const dropHelper = document.createElement('div');
+      dropHelper.classList.add('image-grid-drop-helper');
+      dropHelper.setAttribute('drop-index', i);
+      dropHelper.addEventListener('dragenter', () => {
+        showGuideline(i);
+      });
+      dropHelper.addEventListener('drop', () => {
+        hideDropHelper();
+      });
+      dropHelperWrapper.appendChild(dropHelper);
+    }
+    dropHelperWrapper.addEventListener('dragleave', event => {
+      if (
+        event.fromElement &&
+        !event.fromElement.classList.contains('image-grid-drop-helper')
+      ) {
+        hideDropHelper();
+      }
+    });
+
+    node.appendChild(dropHelperWrapper);
 
     const imageGridItemWrapper = document.createElement('div');
     imageGridItemWrapper.classList.add('image-grid-item-wrapper');
@@ -125,6 +185,24 @@ class ImageGrid extends BlockEmbed {
     const cursor = this.domNode.querySelector('.cursor');
     cursor.style.display = 'none';
     this.scroll.emitter.emit(Emitter.events.IMAGE_GRID_FOCUS, undefined);
+  }
+
+  showDropHelper() {
+    if (this.domNode.querySelectorAll('.image-grid-item-container').length === MAX_IMAGE_LENGTH) {
+      return;
+    }
+
+    const dropHelper = this.domNode.querySelector('.image-grid-drop-helper-wrapper');
+    const { height } = this.domNode.querySelector('.ql-img img').getBoundingClientRect();
+    dropHelper.style.height = `${height}px`;
+    dropHelper.style.display = 'flex';
+  }
+
+  hideDropHelper() {
+    const guideline = this.domNode.querySelector('.guideline');
+    guideline.style.display = 'none';
+    const dropHelper = this.domNode.querySelector('.image-grid-drop-helper-wrapper');
+    dropHelper.style.display = 'none';
   }
 }
 ImageGrid.blotName = 'image-grid';
