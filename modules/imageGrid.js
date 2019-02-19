@@ -200,30 +200,29 @@ class ImageGrid extends Module {
     const updateDelta = new Delta()
       .retain(originImageGridIndex)
       .insert(...deltaLeft)
-      .insert('\n')
+      .insert('\n') // image이면 넣고 imageGrid이면 넣지않아야함
       .insert(...deltaRight)
       .insert('\n');
     blot.remove();
+    this.quill.setSelection(originImageGridIndex, 0, Quill.sources.USER); // TODO: 뒤 이미지의 왼쪽 fakeCursor 보여주기
     this.quill.updateContents(updateDelta, 'user');
-    // TODO: 앞 이미지의 fakeCursor 보여주기
   }
 
-  insertImageToImageGrid(targetBlot, newImageBlot, dropedPositionIndex) {
+  insertImageToImageGrid(targetBlot, newImageBlot, dropIndex) {
     const {
       'image-grid': { data: beforeData },
     } = targetBlot.delta().ops[0].insert;
+
+    const afterData = [...beforeData];
 
     const newImageData = {
       image: newImageBlot.domNode.querySelector('IMG').getAttribute('src'),
       attributes: newImageBlot.formats(),
     };
+
+    afterData.splice(dropIndex, 0, newImageData);
+
     const originImageGridIndex = this.quill.getIndex(targetBlot);
-
-    const dataLeft = beforeData.slice(0, dropedPositionIndex);
-    const dataRight = beforeData.slice(dropedPositionIndex, beforeData.length);
-
-    const afterData = [...dataLeft, newImageData, ...dataRight];
-
     const updateDelta = new Delta().retain(originImageGridIndex).insert({
       'image-grid': {
         data: afterData,
@@ -231,6 +230,40 @@ class ImageGrid extends Module {
     });
     targetBlot.remove();
     newImageBlot.remove();
+    this.quill.updateContents(updateDelta, 'user');
+  }
+
+  changeImageSquence(targetBlot, originItemIndex, dropIndex) {
+    if (
+      dropIndex >= originItemIndex &&
+      (dropIndex - originItemIndex === 0 || dropIndex - originItemIndex === 1)
+    ) {
+      // 00, 01, 11, 12, 22, 23
+      return;
+    }
+
+    const {
+      'image-grid': { data: beforeData },
+    } = targetBlot.delta().ops[0].insert;
+
+    const afterData = [...beforeData];
+
+    const [imageItemWillBeMoved] = afterData.splice(originItemIndex, 1);
+
+    if (dropIndex >= originItemIndex) {
+      afterData.splice(dropIndex - 1, 0, imageItemWillBeMoved);
+    } else {
+      afterData.splice(dropIndex, 0, imageItemWillBeMoved);
+    }
+
+    const originImageGridIndex = this.quill.getIndex(targetBlot);
+    const updateDelta = new Delta().retain(originImageGridIndex).insert({
+      'image-grid': {
+        data: afterData,
+      },
+    });
+    console.log(updateDelta);
+    targetBlot.remove();
     this.quill.updateContents(updateDelta, 'user');
   }
 
