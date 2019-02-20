@@ -83,7 +83,7 @@ class ImageGrid extends BlockEmbed {
 
     const sumOfRatios = data.reduce((accumulator, { attributes: { ratio } }) => accumulator + Number(ratio), 0);
 
-    data.forEach(eachImageData => {
+    data.forEach((eachImageData, index) => {
       const {
         image: imageSrc,
         attributes: { ratio, caption },
@@ -118,6 +118,7 @@ class ImageGrid extends BlockEmbed {
       imaegGridItemContainer.classList.add('image-grid-item-container', 'ql-img');
       imaegGridItemContainer.appendChild(imageElement);
       imaegGridItemContainer.appendChild(captionElement);
+      imaegGridItemContainer.setAttribute('item-index', index);
       imaegGridItemContainer.setAttribute('contenteditable', 'false');
 
       imageGridItemWrapper.appendChild(imaegGridItemContainer);
@@ -142,6 +143,10 @@ class ImageGrid extends BlockEmbed {
 
   static sanitize(url) {
     return sanitize(url, ['http', 'https', 'data']) ? url : '//:0';
+  }
+
+  static getMaxLength() {
+    return MAX_IMAGE_LENGTH;
   }
 
   showFakeCursor(index = 0) {
@@ -169,7 +174,7 @@ class ImageGrid extends BlockEmbed {
     const maxCursorOffset = this.domNode.querySelectorAll('.ql-img').length;
     const cursorOffset = index < 0 ? maxCursorOffset : index;
     setTimeout(() => {
-      this.scroll.domNode.blur();
+      this.scroll.domNode.blur(); // TODO: 이미지 focus된거 있으면 풀어주기
       this.scroll.emitter.once(Emitter.events.SELECTION_CHANGE, () => {
         this.hideFakeCursor();
       });
@@ -187,8 +192,11 @@ class ImageGrid extends BlockEmbed {
     this.scroll.emitter.emit(Emitter.events.IMAGE_GRID_FOCUS, undefined);
   }
 
-  showDropHelper() {
-    if (this.domNode.querySelectorAll('.image-grid-item-container').length === MAX_IMAGE_LENGTH) {
+  showDropHelper(isImageGridItemDragging) {
+    if (
+      !isImageGridItemDragging &&
+      this.domNode.querySelectorAll('.image-grid-item-container').length === MAX_IMAGE_LENGTH
+    ) {
       return;
     }
 
