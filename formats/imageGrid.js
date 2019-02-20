@@ -145,6 +145,10 @@ class ImageGrid extends BlockEmbed {
     return sanitize(url, ['http', 'https', 'data']) ? url : '//:0';
   }
 
+  static getMaxLength() {
+    return MAX_IMAGE_LENGTH;
+  }
+
   showFakeCursor(index = 0) {
     const cursor = this.domNode.querySelector('.cursor');
     const { height } = this.domNode.querySelector('.ql-img img').getBoundingClientRect();
