@@ -1,7 +1,7 @@
+import _ from 'lodash';
 import Delta from 'quill-delta';
 import Quill from '../core/quill';
 import Module from '../core/module';
-import _ from 'lodash';
 
 import ImageGridFormat from '../formats/imageGrid';
 
@@ -136,11 +136,23 @@ class ImageGrid extends Module {
     }
 
     const imageGridData = images.map(image => {
-      const url = image.domNode.querySelector('IMG').getAttribute('src');
-      return {
+      const imageNode = image.domNode.querySelector('IMG');
+      const url = imageNode.getAttribute('src');
+      const imageData = {
         image: url,
         attributes: image.formats(),
       };
+
+      const imgCommentIds = _.filter(
+        image.domNode.parentNode.classList,
+        className => _.includes(className, 'comment_'),
+      );
+
+      if (!_.isEmpty(imgCommentIds)) {
+        imageData.attributes['inline-comment'] = imgCommentIds;
+      }
+
+      return imageData;
     });
 
     const targetImageIndex = this.quill.getIndex(targetImageBlot);
@@ -231,6 +243,34 @@ class ImageGrid extends Module {
     });
     targetBlot.remove();
     newImageBlot.remove();
+    this.quill.updateContents(updateDelta, 'user');
+  }
+
+  insertCommentToImageGrid(targetBlot, commentId, imageIndex) {
+    const {
+      'image-grid': { data: beforeData },
+    } = targetBlot.delta().ops[0].insert;
+    debugger;
+
+    const imageGridIndex = this.quill.getIndex(targetBlot);
+    const afterData = [...beforeData];
+    if (_.isEmpty(afterData[imageIndex].attributes['inline-comment'])) {
+      afterData[imageIndex].attributes['inline-comment'] = [
+        `comment_${commentId}`,
+      ];
+    } else {
+      afterData[imageIndex].attributes['inline-comment'].push(
+        `comment_${commentId}`,
+      );
+    }
+    const updateDelta = new Delta()
+      .retain(imageGridIndex)
+      .delete(1)
+      .insert({
+        'image-grid': {
+          data: afterData,
+        },
+      });
     this.quill.updateContents(updateDelta, 'user');
   }
 

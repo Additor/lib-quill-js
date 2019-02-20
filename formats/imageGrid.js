@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import { sanitize } from '../formats/link';
 import Emitter from '../core/emitter';
 import Quill from '../core/quill';
@@ -86,7 +87,7 @@ class ImageGrid extends BlockEmbed {
     data.forEach(eachImageData => {
       const {
         image: imageSrc,
-        attributes: { ratio, caption },
+        attributes: { ratio, caption, 'inline-comment': inlineComment },
       } = eachImageData;
 
       const imaegGridItemContainer = document.createElement('DIV');
@@ -116,6 +117,11 @@ class ImageGrid extends BlockEmbed {
 
       imaegGridItemContainer.style.width = `${(Number(ratio) * 100) / sumOfRatios}%`;
       imaegGridItemContainer.classList.add('image-grid-item-container', 'ql-img');
+      if (inlineComment && inlineComment.length > 0) {
+        inlineComment.forEach(commentId => {
+          imaegGridItemContainer.classList.add(commentId);
+        });
+      }
       imaegGridItemContainer.appendChild(imageElement);
       imaegGridItemContainer.appendChild(captionElement);
       imaegGridItemContainer.setAttribute('contenteditable', 'false');
