@@ -150,32 +150,24 @@ class ImageGrid extends Module {
       } else {
         images = [targetImageBlot, originBlot];
       }
-
-    const imageGridData = images.map(image => {
-      const imageNode = image.domNode.querySelector('IMG');
-      const url = imageNode.getAttribute('src');
-      const imageData = {
-        image: url,
-        attributes: image.formats(),
-      };
-
-      const imgCommentIds = _.filter(
-        image.domNode.parentNode.classList,
-        className => _.includes(className, 'comment_'),
-      );
-
-      if (!_.isEmpty(imgCommentIds)) {
-        imageData.attributes['inline-comment'] = imgCommentIds;
-      }
-
-      return imageData;
-    });
       imageGridData = images.map(image => {
-        const url = image.domNode.querySelector('IMG').getAttribute('src');
-        return {
+        const imageNode = image.domNode.querySelector('IMG');
+        const url = imageNode.getAttribute('src');
+        const imageData = {
           image: url,
           attributes: image.formats(),
         };
+
+        const imgCommentIds = _.filter(
+          image.domNode.parentNode.classList,
+          className => _.includes(className, 'comment_'),
+        );
+
+        if (!_.isEmpty(imgCommentIds)) {
+          imageData.attributes['inline-comment'] = imgCommentIds;
+        }
+
+        return imageData;
       });
       const originBlotIndex = this.quill.getIndex(originBlot);
       const originImageDeleteDelta = new Delta()
