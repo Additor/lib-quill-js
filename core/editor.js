@@ -225,8 +225,9 @@ class Editor {
 
 function convertListHTML(items, lastIndent, types) {
   const html = items.reduce((result, curr) => {
-    const { child, offset, length, indent, type } = curr;
-    const attribute = type ? ` data-list="${type}"` : '';
+    const { child, offset, length, indent, type, start } = curr;
+    let attribute = type ? ` data-list="${type}"` : '';
+    if (start) attribute += ` start="${Number(start)}"`;
     const className = indent > 0 ? ` class="ql-indent-${indent}"` : '';
     const liHtml = `<li${attribute}${className}>${convertHTML(
       child,
@@ -254,6 +255,7 @@ function convertHTML(blot, index, length, isRoot = false) {
           offset,
           length: childLength,
           indent: formats.indent || 0,
+          start: formats.start,
           type: formats.list,
         });
       });

@@ -1,7 +1,7 @@
 import Delta from 'quill-delta';
 import Quill from '../core/quill';
 import Module from '../core/module';
-import image from '../formats/image';
+import image from '../formats/imageBlock';
 
 class Image extends Module {
   static register() {
@@ -46,7 +46,8 @@ class Image extends Module {
         break;
       case 38: // arrow up
         if (imageIndex > 0) {
-          this.quill.setSelection(imageIndex - 1, 0, Quill.sources.USER);
+          const [imageBeforeLine] = this.quill.getLine(imageIndex - 1);
+          this.quill.setSelection(this.quill.getIndex(imageBeforeLine), 0, Quill.sources.USER);
         }
         prevented = true;
         break;
@@ -59,7 +60,7 @@ class Image extends Module {
         prevented = true;
         break;
       case 40: // arrow down
-        if (imageLastIndex < quillLength) {
+        if (imageLastIndex < quillLength - 1) {
           this.quill.setSelection(imageLastIndex, 0, Quill.sources.USER);
         }
         prevented = true;
@@ -94,8 +95,13 @@ class Image extends Module {
         break;
       case 46: // delete
         if (cursorOffset === 0) {
-          blot.remove();
-          this.quill.update(Quill.sources.USER);
+          this.quill.updateContents(
+            new Delta()
+              .retain(imageIndex)
+              .insert('\n')
+              .delete(1),
+            Quill.sources.USER,
+          );
           this.quill.setSelection(imageIndex, Quill.sources.SILENT);
         } else {
           if (imageLastIndex < quillLength) {
@@ -109,6 +115,12 @@ class Image extends Module {
         }
         break;
       default:
+        if (ev.key.length === 1) {
+          if (imageIndex === 0) {
+            this.quill.updateContents([{ insert: '\n' }]);
+          }
+          this.quill.setSelection(imageIndex - 1, 0, Quill.sources.USER);
+        }
     }
 
     if (prevented) {

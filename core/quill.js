@@ -99,6 +99,25 @@ class Quill {
     this.emitter.on(Emitter.events.EDITOR_CHANGE, type => {
       if (type === Emitter.events.TEXT_CHANGE) {
         this.root.classList.toggle('ql-blank', this.editor.isBlank());
+        const lines = this.scroll.lines();
+        let orderNumber = 0;
+        lines.forEach(line => {
+          const { attributes, domNode, statics } = line;
+          if (
+            statics.blotName === 'list' &&
+            domNode.getAttribute('data-list') === 'ordered' &&
+            !attributes.attributes.indent
+          ) {
+            const startAttribute = domNode.getAttribute('start');
+            if (startAttribute) {
+              domNode.setAttribute('value', startAttribute);
+              orderNumber = Number(startAttribute);
+            } else {
+              orderNumber += 1;
+              domNode.setAttribute('value', orderNumber);
+            }
+          }
+        });
       }
     });
     this.emitter.on(Emitter.events.SCROLL_UPDATE, (source, mutations) => {
