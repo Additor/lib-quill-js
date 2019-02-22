@@ -480,6 +480,11 @@ Keyboard.DEFAULTS = {
             return false;
           }
 
+          if (prevLine.statics.blotName === 'image') {
+            prevLine.showFakeCursor(false);
+            return false;
+          }
+
           const { head: firstChild, tail: lastChild } = prevLine.children;
           if (
             firstChild &&
@@ -520,7 +525,10 @@ Keyboard.DEFAULTS = {
             return false;
           }
 
-          if (nextLine.statics.blotName === 'image-grid') {
+          if (
+            nextLine.statics.blotName === 'image-grid' ||
+            nextLine.statics.blotName === 'image'
+          ) {
             nextLine.showFakeCursor();
             return false;
           }
