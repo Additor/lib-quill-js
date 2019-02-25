@@ -25,6 +25,39 @@ class AdditorImage extends BlockEmbed {
     );
 
     const imageWrapper = document.createElement('DIV');
+    imageWrapper.classList.add('ql-img-wrapper');
+
+    function getVerticalBarPosition(isGuidelineLeft, imageWidth) {
+      let cursorPosition = '';
+      let alignStyle = null;
+      const styles = node.getAttribute('style');
+      if (styles) {
+        styles
+          .split(';')
+          .map(style => style.trim())
+          .forEach(style => {
+            const [styleName, styleValue] = style.split(': ');
+            if (styleName === 'float') {
+              alignStyle = styleValue;
+              return false;
+            }
+            return true;
+          });
+      }
+
+      if (alignStyle === 'left') {
+        cursorPosition = isGuidelineLeft ? `-2px` : `${imageWidth + 7}px`;
+      } else if (alignStyle === 'right') {
+        cursorPosition = isGuidelineLeft
+          ? `calc(100% - ${imageWidth + 8}px)`
+          : `calc(100% + 1px)`;
+      } else {
+        cursorPosition = isGuidelineLeft
+          ? `calc(50% - ${imageWidth / 2 + 5}px)`
+          : `calc(50% + ${imageWidth / 2 + 4}px)`;
+      }
+      return cursorPosition;
+    }
 
     const cursor = document.createElement('div');
     cursor.classList.add('vertical-bar', 'cursor');
@@ -60,44 +93,12 @@ class AdditorImage extends BlockEmbed {
     imageWrapper.setAttribute('contenteditable', 'false');
     imageWrapper.appendChild(captionInput);
 
-    function getGuidelinePosition(isGuidelineLeft, imageWidth) {
-      let cursorPosition = '';
-      let alignStyle = null;
-      const styles = node.getAttribute('style');
-      if (styles) {
-        styles
-          .split(';')
-          .map(style => style.trim())
-          .forEach(style => {
-            const [styleName, styleValue] = style.split(': ');
-            if (styleName === 'float') {
-              alignStyle = styleValue;
-              return false;
-            }
-            return true;
-          });
-      }
-
-      if (alignStyle === 'left') {
-        cursorPosition = isGuidelineLeft ? `-2px` : `${imageWidth + 7}px`;
-      } else if (alignStyle === 'right') {
-        cursorPosition = isGuidelineLeft
-          ? `calc(100% - ${imageWidth + 8}px)`
-          : `calc(100% + 1px)`;
-      } else {
-        cursorPosition = isGuidelineLeft
-          ? `calc(50% - ${imageWidth / 2 + 5}px)`
-          : `calc(50% + ${imageWidth / 2 + 4}px)`;
-      }
-      return cursorPosition;
-    }
-
     const dropHelperLeft = document.createElement('div');
     dropHelperLeft.classList.add('image-drop-helper', 'left');
     dropHelperLeft.addEventListener('dragenter', () => {
       const width = Number(node.getAttribute('width'));
       const height = width / Number(node.getAttribute('ratio'));
-      const position = getGuidelinePosition(true, width);
+      const position = getVerticalBarPosition(true, width);
       guideline.style.display = 'block';
       guideline.style.height = `${height}px`;
       guideline.style.left = position;
@@ -108,7 +109,7 @@ class AdditorImage extends BlockEmbed {
     dropHelperRight.addEventListener('dragenter', () => {
       const width = Number(node.getAttribute('width'));
       const height = width / Number(node.getAttribute('ratio'));
-      const position = getGuidelinePosition(false, width);
+      const position = getVerticalBarPosition(false, width);
       guideline.style.display = 'block';
       guideline.style.height = `${height}px`;
       guideline.style.left = position;
@@ -135,6 +136,7 @@ class AdditorImage extends BlockEmbed {
       dropHelperRight.style.display = 'none';
       guideline.style.display = 'none';
     });
+
     return node;
   }
 
@@ -217,8 +219,16 @@ class AdditorImage extends BlockEmbed {
               dropHelpers.forEach(dropHelper => {
                 dropHelper.style.height = `${height}px`;
               });
+
+              const imageWrapper = this.domNode.querySelector('.ql-img-wrapper');
+              imageWrapper.addEventListener('click', event => {
+                if (event.target === imageWrapper) {
+                  const center = event.target.getBoundingClientRect().width / 2;
+                  this.showFakeCursor(event.offsetX < center);
+                }
+              });
             }
-          } else if (name === 'ratio') {
+          } else if (name === 'ratio') { // DomNode, event, listener를 받아서 처리하는 함수로 만들 수 있을 듯..
             const { width: imageWidth } = this.formats();
             if (imageWidth) {
               const dropHelpers = this.domNode.querySelectorAll('.image-drop-helper');
@@ -226,6 +236,14 @@ class AdditorImage extends BlockEmbed {
               const height = width / value;
               dropHelpers.forEach(dropHelper => {
                 dropHelper.style.height = `${height}px`;
+              });
+
+              const imageWrapper = this.domNode.querySelector('.ql-img-wrapper');
+              imageWrapper.addEventListener('click', event => {
+                if (event.target === imageWrapper) {
+                  const center = event.target.getBoundingClientRect().width / 2;
+                  this.showFakeCursor(event.offsetX < center);
+                }
               });
             }
           }
@@ -287,7 +305,6 @@ class AdditorImage extends BlockEmbed {
   showFakeCursor(isLeft = true) {
     this.hideFakeCursor();
 
-    debugger;
     const cursor = this.domNode.querySelector('.cursor');
     const { width, height } = this.getImageRect();
     const alignStyle = this.getImageAlignedStatus();

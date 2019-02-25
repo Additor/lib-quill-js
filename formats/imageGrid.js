@@ -30,11 +30,12 @@ class ImageGrid extends BlockEmbed {
 
     function showGuideline(index) {
       const { height } = node.querySelector('.ql-img img').getBoundingClientRect();
+
       let leftPosition = '';
       if (index === 0) {
-        leftPosition = '-5px';
+        leftPosition = '-6';
       } else {
-        let sumOfWidths = -5;
+        let sumOfWidths = -6;
         node.querySelectorAll('.ql-img').forEach((img, i) => {
           if (i < index) {
             sumOfWidths += img.getBoundingClientRect().width + 8;
@@ -155,6 +156,34 @@ class ImageGrid extends BlockEmbed {
     return MAX_IMAGE_LENGTH;
   }
 
+  value() {
+    const imageGridItemWrapper = this.domNode.querySelector('.image-grid-item-wrapper');
+    if (!imageGridItemWrapper.onclick) {
+      imageGridItemWrapper.onclick = event => {
+        if (event.target === imageGridItemWrapper) {
+          const sections = [];
+          sections.push({ start: 0, end: 8 });
+          _.map(
+            imageGridItemWrapper.querySelectorAll('.ql-img'),
+            el => el.getBoundingClientRect().width,
+          ).forEach((imageWidth, i) => {
+            const lastEnd = sections[i].end;
+            const start = lastEnd + imageWidth;
+            const end = start + 8;
+            sections.push({ start, end });
+          });
+          sections.forEach(({ start, end }, i) => {
+            if (start < event.offsetX && event.offsetX < end) {
+              this.showFakeCursor(i);
+              return false;
+            }
+          });
+        }
+      };
+    }
+    return super.value();
+  }
+
   showFakeCursor(index = 0) {
     const cursor = this.domNode.querySelector('.cursor');
     const { height } = this.domNode.querySelector('.ql-img img').getBoundingClientRect();
@@ -162,9 +191,9 @@ class ImageGrid extends BlockEmbed {
 
     let leftPosition = '';
     if (index < 0) {
-      leftPosition = `calc(100% + 5px)`;
+      leftPosition = `calc(100% + 6px)`;
     } else {
-      let sumOfWidths = -5;
+      let sumOfWidths = -7;
       this.domNode.querySelectorAll('.ql-img').forEach((img, i) => {
         if (i < index) {
           sumOfWidths += img.getBoundingClientRect().width + 8;

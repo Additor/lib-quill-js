@@ -9,22 +9,21 @@ class ImageGrid extends Module {
   constructor(...args) {
     super(...args);
     this.listenImageGridFocus();
+    window.addEventListener('mousedown', this.handleMouseDown.bind(this));
     window.addEventListener('keydown', this.handleKeyDownFakeCursor.bind(this));
-    window.addEventListener('drop', this.handleImageDrop.bind(this));
-    window.addEventListener('dragstart', this.handleKeyDownFakeCursor.bind(this));
   }
 
   static register() {
     Quill.register(ImageGridFormat);
   }
 
-  handleImageDrop(ev) {
-
-  }
-
-  handleImageDragStart() {
-    // image 위치이동 가능해야 함
-    // image 밖으로 꺼내는 것 가능해야 함
+  handleMouseDown() {
+    const fakeCursors = document.querySelectorAll('.image-grid .cursor');
+    if (fakeCursors.length > 0) {
+      fakeCursors.forEach(cursor => {
+        cursor.style.display = 'none';
+      });
+    }
   }
 
   handleKeyDownFakeCursor(ev) {
@@ -130,7 +129,6 @@ class ImageGrid extends Module {
         'image-grid': { data: images },
       });
     }
-    console.log(ops);
     return ops;
   }
 
@@ -172,7 +170,7 @@ class ImageGrid extends Module {
       const originBlotIndex = this.quill.getIndex(originBlot);
       const originImageDeleteDelta = new Delta()
         .retain(originBlotIndex)
-        .delete(2);
+        .delete(1);
       this.quill.updateContents(originImageDeleteDelta, 'user');
     } else if (originBlot.statics.blotName === 'image-grid') { // 지우기
       const prevOriginData = this.getDataFromImageGridBlot(originBlot);
@@ -197,9 +195,6 @@ class ImageGrid extends Module {
         .retain(originBlotIndex)
         .delete(1)
         .insert(...nextOriginOps);
-      if (nextOriginData.length === 1) {
-        originGridUpdatedDelta.insert('\n');
-      }
 
       this.quill.updateContents(originGridUpdatedDelta, 'user');
     }
@@ -207,13 +202,14 @@ class ImageGrid extends Module {
     const newImageGridOps = this.makeOperations(imageGridData);
     const imageGridDelta = new Delta()
       .retain(targetImageIndex)
-      .delete(2)
+      .delete(1)
       .insert(...newImageGridOps);
     this.quill.updateContents(imageGridDelta, 'user');
   }
 
   splitImageGrid(splitCursorIndex) {
     const { blot } = this.imageGridFocusData;
+    this.imageGridFocusData = null;
 
     const originImageGridIndex = this.quill.getIndex(blot);
     const prevData = this.getDataFromImageGridBlot(blot);
@@ -230,15 +226,9 @@ class ImageGrid extends Module {
 
     const updateDelta = new Delta()
       .retain(originImageGridIndex)
-      .delete(1)
-      .insert(...nextLeftOps);
-    if (nextDataLeft.length === 1) {
-      updateDelta.insert('\n');
-    }
-    updateDelta.insert(...nextRightOps);
-    if (nextDataRight.length === 1) {
-      updateDelta.insert('\n');
-    }
+      .insert(...nextLeftOps)
+      .insert(...nextRightOps)
+      .delete(1);
     // this.quill.setSelection(originImageGridIndex, 0, Quill.sources.USER); // TODO: 뒤 이미지의 왼쪽 fakeCursor 보여주기
     this.quill.updateContents(updateDelta, 'user');
   }
@@ -294,7 +284,6 @@ class ImageGrid extends Module {
     const {
       'image-grid': { data: beforeData },
     } = targetBlot.delta().ops[0].insert;
-    debugger;
 
     const imageGridIndex = this.quill.getIndex(targetBlot);
     const afterData = [...beforeData];
@@ -328,9 +317,6 @@ class ImageGrid extends Module {
     const updateDelta = new Delta()
       .retain(targetBlotIndex)
       .insert(...nextOriginOps);
-    if (nextOriginData.length === 1) {
-      updateDelta.insert('\n');
-    }
     this.quill.updateContents(updateDelta, 'user');
     originBlot.remove();
 
@@ -368,12 +354,11 @@ class ImageGrid extends Module {
           .retain(targetIndex)
           .insert(...nextTargetOps);
         this.quill.updateContents(imageInsertGridDelta, 'user');
-        targetBlot.remove(); // 해당 블랏과 개행을 지워야 할 것 같은데..
+        targetBlot.remove(); // 해당 블랏과 개행을 지워야 할 것 같은데.. delete1?
       } else {
         const imageInsertDelta = new Delta()
           .retain(targetIndex)
-          .insert({ image }, attributes)
-          .insert('\n');
+          .insert({ image }, attributes);
         this.quill.updateContents(imageInsertDelta, 'user');
       }
     }
