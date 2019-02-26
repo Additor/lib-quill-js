@@ -93,8 +93,18 @@ class AdditorImage extends BlockEmbed {
     imageWrapper.setAttribute('contenteditable', 'false');
     imageWrapper.appendChild(captionInput);
 
+    const dropHelperTop = document.createElement('div');
+    dropHelperTop.classList.add('image-drop-helper', 'image-drop-helper-horizontal', 'top');
+    dropHelperTop.addEventListener('dragenter', () => {
+      guideline.style.display = 'none';
+      dropHelperTop.style.borderTop = '1px solid #7552f6';
+    });
+    dropHelperTop.addEventListener('dragleave', () => {
+      dropHelperTop.style.borderTop = 'none';
+    });
+
     const dropHelperLeft = document.createElement('div');
-    dropHelperLeft.classList.add('image-drop-helper', 'left');
+    dropHelperLeft.classList.add('image-drop-helper', 'image-drop-helper-vertical', 'left');
     dropHelperLeft.addEventListener('dragenter', () => {
       const width = Number(node.getAttribute('width'));
       const height = width / Number(node.getAttribute('ratio'));
@@ -105,7 +115,7 @@ class AdditorImage extends BlockEmbed {
     });
 
     const dropHelperRight = document.createElement('div');
-    dropHelperRight.classList.add('image-drop-helper', 'right');
+    dropHelperRight.classList.add('image-drop-helper', 'image-drop-helper-vertical', 'right');
     dropHelperRight.addEventListener('dragenter', () => {
       const width = Number(node.getAttribute('width'));
       const height = width / Number(node.getAttribute('ratio'));
@@ -115,6 +125,7 @@ class AdditorImage extends BlockEmbed {
       guideline.style.left = position;
     });
 
+    node.appendChild(dropHelperTop);
     node.appendChild(dropHelperLeft);
     node.appendChild(dropHelperRight);
     node.appendChild(imageWrapper);
@@ -213,7 +224,7 @@ class AdditorImage extends BlockEmbed {
           if (name === 'width') {
             const { ratio } = this.formats();
             if (ratio) {
-              const dropHelpers = this.domNode.querySelectorAll('.image-drop-helper');
+              const dropHelpers = this.domNode.querySelectorAll('.image-drop-helper-vertical');
               const width = Number(value);
               const height = width / ratio;
               dropHelpers.forEach(dropHelper => {
@@ -231,7 +242,7 @@ class AdditorImage extends BlockEmbed {
           } else if (name === 'ratio') { // DomNode, event, listener를 받아서 처리하는 함수로 만들 수 있을 듯..
             const { width: imageWidth } = this.formats();
             if (imageWidth) {
-              const dropHelpers = this.domNode.querySelectorAll('.image-drop-helper');
+              const dropHelpers = this.domNode.querySelectorAll('.image-drop-helper-vertical');
               const width = Number(imageWidth);
               const height = width / value;
               dropHelpers.forEach(dropHelper => {
@@ -330,21 +341,25 @@ class AdditorImage extends BlockEmbed {
   }
 
   showDropHelper() {
-    const dropHelpers = this.domNode.querySelectorAll('.image-drop-helper');
+    const dropHelpers = this.domNode.querySelectorAll('.image-drop-helper-vertical');
     const { height } = this.getImageRect();
     dropHelpers.forEach(dropHelper => {
       dropHelper.style.height = `${height}px`;
       dropHelper.style.display = 'block';
     });
+    const dropHelperTop = this.domNode.querySelector('.image-drop-helper-horizontal');
+    dropHelperTop.style.display = 'block';
   }
 
   hideDropHelper() {
     const dropGuideline = this.domNode.querySelector('.guideline');
     dropGuideline.style.display = 'none';
-    const dropHelpers = this.domNode.querySelectorAll('.image-drop-helper');
+    const dropHelpers = this.domNode.querySelectorAll('.image-drop-helper-vertical');
     dropHelpers.forEach(dropHelper => {
       dropHelper.style.display = 'none';
     });
+    const dropHelperTop = this.domNode.querySelector('.image-drop-helper-horizontal');
+    dropHelperTop.style.display = 'none';
   }
 }
 

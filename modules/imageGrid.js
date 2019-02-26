@@ -139,13 +139,69 @@ class ImageGrid extends Module {
     return data;
   }
 
-  insertImageGrid(originBlot, originIndexInBlot, targetImageBlot, isLeft) {
-    let imageGridData = null;
+  insertImageToPrevLine(imageData, targetBlot) {
+    const index = this.quill.getIndex(targetBlot);
+    this.quill.insertText(index, ' \n', 'user');
+    this.quill.removeFormat(index, 1, 'user');
+    this.quill.deleteText(index, 1, 'user');
+
+    const {
+      image: imageSrc,
+      attributes: { caption, ratio, width, style }
+    } = imageData;
+
+    const copiedImageDelta = new Delta()
+      .retain(index)
+      .delete(1)
+      .insert(
+        { image: imageSrc },
+        {
+          caption,
+          ratio,
+          width,
+          style,
+        },
+      );
+    this.quill.updateContents(copiedImageDelta, 'user');
+
+    // TODO: comment 처리 필요
+    // const originImg = originBlot.domNode; // ?코멘트 어케 바뀌나??
+    // if (_.toUpper(originImg.parentNode.nodeName) === 'COMMENT') {
+    //   // 코멘트가 있는 이미지인 경우 코멘트도 이동시켜준다.
+    //   const commentIds = _.toArray(originImg.parentNode.classList);
+    //   this.quill.formatText(index, 1, 'inline-comment', commentIds, 'user-comment');
+    // }
+  }
+
+  insertImageGrid(originBlot, originIndexInBlot, targetImageBlot, dropHelperIndex) {
+    let imageGridData = null; // TODO: dropHelperIndex === 0 일때 노드 추가하면서 delete1 해야하는 이유가 뭘까 확인해보기
     if (originBlot.statics.blotName === 'image') {
       let images = null;
-      if (isLeft) {
+      if (dropHelperIndex === -1) { // top: -1
+
+        const { caption, ratio, width, style } = originBlot.formats();
+        const { image } = originBlot.value();
+
+        this.insertImageToPrevLine(
+          {
+            image,
+            attributes: { caption, ratio, width, style },
+          },
+          targetImageBlot,
+        );
+        // TODO: comment 처리 필요함
+
+        const originBlotIndex = this.quill.getIndex(originBlot);
+        const originImageDeleteDelta = new Delta()
+          .retain(originBlotIndex)
+          .delete(1);
+        this.quill.updateContents(originImageDeleteDelta, 'user');
+        this.quill.setSelection(null);
+
+        return;
+      } else if (dropHelperIndex === 0) {
         images = [originBlot, targetImageBlot];
-      } else {
+      } else if (dropHelperIndex === 1) {
         images = [targetImageBlot, originBlot];
       }
       imageGridData = images.map(image => {
@@ -178,19 +234,30 @@ class ImageGrid extends Module {
 
       const [removedItem] = nextOriginData.splice(originIndexInBlot, 1);
       const targetImageData = {
-        image: targetImageBlot.domNode.querySelector('IMG').getAttribute('src'),
+        image: targetImageBlot.value().image,
         attributes: targetImageBlot.formats(),
       };
+      if (dropHelperIndex === -1) {
+        this.insertImageToPrevLine(removedItem, targetImageBlot);
 
-      if (isLeft) {
+        const originBlotIndex = this.quill.getIndex(originBlot);
+        const nextOriginOps = this.makeOperations(nextOriginData);
+        const originImageDeleteDelta = new Delta()
+          .retain(originBlotIndex)
+          .delete(1)
+          .insert(...nextOriginOps);
+        this.quill.updateContents(originImageDeleteDelta, 'user');
+        this.quill.setSelection(null);
+
+        return;
+      } else if (dropHelperIndex === 0) {
         imageGridData = [removedItem, targetImageData];
-      } else {
+      } else if (dropHelperIndex === 1) {
         imageGridData = [targetImageData, removedItem];
       }
 
       const originBlotIndex = this.quill.getIndex(originBlot);
       const nextOriginOps = this.makeOperations(nextOriginData);
-
       const originGridUpdatedDelta = new Delta()
         .retain(originBlotIndex)
         .delete(1)
@@ -238,10 +305,15 @@ class ImageGrid extends Module {
     const nextTargetData = [...prevTargetData];
 
     const newImageData = {
-      image: newImageBlot.domNode.querySelector('IMG').getAttribute('src'),
+      image: newImageBlot.value().image,
       attributes: newImageBlot.formats(),
     };
-
+    if (dropIndex === -1) {
+      // TODO: comment 처리 필요
+      this.insertImageToPrevLine(newImageData, targetBlot);
+      newImageBlot.remove();
+      return;
+    }
     nextTargetData.splice(dropIndex, 0, newImageData);
 
     const targetBlotIndex = this.quill.getIndex(targetBlot);
@@ -255,13 +327,28 @@ class ImageGrid extends Module {
   }
 
   changeImageSquence(targetBlot, originItemIndex, dropIndex) {
+    if (dropIndex === -1) {
+      const prevTargetData = this.getDataFromImageGridBlot(targetBlot);
+      const nextTargetData = [...prevTargetData];
+      const [imageItemWillBeMoved] = nextTargetData.splice(originItemIndex, 1);
+      this.insertImageToPrevLine(imageItemWillBeMoved, targetBlot);
+
+      const originImageGridIndex = this.quill.getIndex(targetBlot);
+      const nextTargetOps = this.makeOperations(nextTargetData);
+      const updateDelta = new Delta()
+        .retain(originImageGridIndex)
+        .insert(...nextTargetOps);
+      this.quill.updateContents(updateDelta, 'user');
+      targetBlot.remove();
+      return;
+    }
+
     if (
       dropIndex >= originItemIndex &&
       (dropIndex - originItemIndex === 0 || dropIndex - originItemIndex === 1)
     ) {
       return;
     }
-
     const prevTargetData = this.getDataFromImageGridBlot(targetBlot);
     const nextTargetData = [...prevTargetData];
     const [imageItemWillBeMoved] = nextTargetData.splice(originItemIndex, 1);
@@ -270,7 +357,6 @@ class ImageGrid extends Module {
     } else {
       nextTargetData.splice(dropIndex, 0, imageItemWillBeMoved);
     }
-
     const originImageGridIndex = this.quill.getIndex(targetBlot);
     const nextTargetOps = this.makeOperations(nextTargetData);
     const updateDelta = new Delta()
@@ -307,6 +393,7 @@ class ImageGrid extends Module {
     this.quill.updateContents(updateDelta, 'user');
   }
 
+  // grid-grid, grid-text
   removeImageFromImageGrid(originBlot, originIndexInBlot, targetBlot, targetIndexInBlot) {
     const prevOriginData = this.getDataFromImageGridBlot(originBlot);
     const nextOriginData = [...prevOriginData];
@@ -325,6 +412,10 @@ class ImageGrid extends Module {
       const { image, attributes } = removedItem;
 
       if (targetBlot.statics.blotName === 'image-grid') {
+        if (targetIndexInBlot === -1) {
+          this.insertImageToPrevLine(removedItem, targetBlot);
+          return;
+        }
         const prevTargetData = this.getDataFromImageGridBlot(targetBlot);
         const nextTargetData = [...prevTargetData];
         nextTargetData.splice(targetIndexInBlot, 0, removedItem);
@@ -334,27 +425,6 @@ class ImageGrid extends Module {
           .insert(...nextTargetOps);
         this.quill.updateContents(gridUpdateDelta, 'user');
         targetBlot.remove();
-      } else if (targetBlot.statics.blotName === 'image') {
-        const nextTargetData = [];
-        const targetImageData = {
-          image: targetBlot.domNode.querySelector('IMG').getAttribute('src'),
-          attributes: targetBlot.statics.formats(),
-        };
-        if (targetIndexInBlot === 0) {
-          // 0: left
-          nextTargetData.push(removedItem);
-          nextTargetData.push(targetImageData);
-        } else {
-          // 1: right
-          nextTargetData.push(targetImageData);
-          nextTargetData.push(removedItem);
-        }
-        const nextTargetOps = this.makeOperations(nextTargetData);
-        const imageInsertGridDelta = new Delta()
-          .retain(targetIndex)
-          .insert(...nextTargetOps);
-        this.quill.updateContents(imageInsertGridDelta, 'user');
-        targetBlot.remove(); // 해당 블랏과 개행을 지워야 할 것 같은데.. delete1?
       } else {
         const imageInsertDelta = new Delta()
           .retain(targetIndex)

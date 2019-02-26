@@ -1,7 +1,6 @@
 import _ from 'lodash';
 import { sanitize } from '../formats/link';
 import Emitter from '../core/emitter';
-import Quill from '../core/quill';
 import { BlockEmbed } from '../blots/block';
 
 const MAX_IMAGE_LENGTH = 3;
@@ -28,13 +27,25 @@ class ImageGrid extends BlockEmbed {
     const dropHelperWrapper = document.createElement('div');
     dropHelperWrapper.classList.add('image-grid-drop-helper-wrapper');
 
+    const dropHelperTop = document.createElement('div');
+    dropHelperTop.classList.add('image-grid-drop-helper', 'top');
+    dropHelperTop.addEventListener('dragenter', () => {
+      hideDropHelper();
+      dropHelperTop.style.borderTop = '1px solid #7552f6';
+    });
+    dropHelperTop.addEventListener('dragleave', () => {
+      dropHelperTop.style.borderTop = 'none';
+    });
+    dropHelperTop.setAttribute('drop-index', '-1');
+
+    const dropHelperWrapperVertical = document.createElement('div');
+    dropHelperWrapperVertical.classList.add('image-grid-drop-helper-wrapper-vertical');
+
     function showGuideline(index) {
       const { height } = node.querySelector('.ql-img img').getBoundingClientRect();
 
-      let leftPosition = '';
-      if (index === 0) {
-        leftPosition = '-6';
-      } else {
+      let leftPosition = '-6px';
+      if (index > 0) {
         let sumOfWidths = -6;
         node.querySelectorAll('.ql-img').forEach((img, i) => {
           if (i < index) {
@@ -43,7 +54,6 @@ class ImageGrid extends BlockEmbed {
         });
         leftPosition = `${sumOfWidths}px`;
       }
-
       const guidelineElement = node.querySelector('.guideline');
       guidelineElement.style.left = leftPosition;
       guidelineElement.style.height = `${height}px`;
@@ -67,9 +77,9 @@ class ImageGrid extends BlockEmbed {
       dropHelper.addEventListener('drop', () => {
         hideDropHelper();
       });
-      dropHelperWrapper.appendChild(dropHelper);
+      dropHelperWrapperVertical.appendChild(dropHelper);
     }
-    dropHelperWrapper.addEventListener('dragleave', event => {
+    dropHelperWrapperVertical.addEventListener('dragleave', event => {
       if (
         event.fromElement &&
         !event.fromElement.classList.contains('image-grid-drop-helper')
@@ -78,6 +88,8 @@ class ImageGrid extends BlockEmbed {
       }
     });
 
+    dropHelperWrapper.appendChild(dropHelperTop);
+    dropHelperWrapper.appendChild(dropHelperWrapperVertical);
     node.appendChild(dropHelperWrapper);
 
     const imageGridItemWrapper = document.createElement('div');
@@ -192,6 +204,8 @@ class ImageGrid extends BlockEmbed {
     let leftPosition = '';
     if (index < 0) {
       leftPosition = `calc(100% + 6px)`;
+    } else if (index === 0) {
+      leftPosition = `-6px`;
     } else {
       let sumOfWidths = -7;
       this.domNode.querySelectorAll('.ql-img').forEach((img, i) => {
@@ -228,17 +242,25 @@ class ImageGrid extends BlockEmbed {
   }
 
   showDropHelper(isImageGridItemDragging) {
+    const dropHelperVertical = this.domNode.querySelector('.image-grid-drop-helper-wrapper-vertical');
+    const dropHelperTop = this.domNode.querySelector('.image-grid-drop-helper.top');
+    const dropHelper = this.domNode.querySelector('.image-grid-drop-helper-wrapper');
+    const { height } = this.domNode.querySelector('.ql-img').getBoundingClientRect();
+
     if (
       !isImageGridItemDragging &&
       this.domNode.querySelectorAll('.image-grid-item-container').length === MAX_IMAGE_LENGTH
     ) {
+      dropHelperVertical.style.display = 'none';
+      dropHelperTop.style.height = `${height + 30}px`;
+      dropHelper.style.display = 'block';
       return;
     }
 
-    const dropHelper = this.domNode.querySelector('.image-grid-drop-helper-wrapper');
-    const { height } = this.domNode.querySelector('.ql-img img').getBoundingClientRect();
-    dropHelper.style.height = `${height}px`;
-    dropHelper.style.display = 'flex';
+    dropHelperVertical.style.height = `${height}px`;
+    dropHelperVertical.style.display = 'flex';
+    dropHelperTop.style.height = '30px';
+    dropHelper.style.display = 'block';
   }
 
   hideDropHelper() {
