@@ -30,13 +30,26 @@ class ImageGrid extends BlockEmbed {
     const dropHelperWrapper = document.createElement('div');
     dropHelperWrapper.classList.add('image-grid-drop-helper-wrapper');
 
+    const dropHelperTop = document.createElement('div');
+    dropHelperTop.classList.add('image-grid-drop-helper', 'top');
+    dropHelperTop.addEventListener('dragenter', () => {
+      hideDropHelper();
+      dropHelperTop.style.borderTop = '1px solid #7552f6';
+    });
+    dropHelperTop.addEventListener('dragleave', () => {
+      dropHelperTop.style.borderTop = 'none';
+    });
+    dropHelperTop.setAttribute('drop-index', '-1');
+
+    const dropHelperWrapperVertical = document.createElement('div');
+    dropHelperWrapperVertical.classList.add('image-grid-drop-helper-wrapper-vertical');
+
     function showGuideline(index) {
       const { height } = node.querySelector('.ql-img img').getBoundingClientRect();
-      let leftPosition = '';
-      if (index === 0) {
-        leftPosition = '-5px';
-      } else {
-        let sumOfWidths = -5;
+
+      let leftPosition = '-6px';
+      if (index > 0) {
+        let sumOfWidths = -6;
         node.querySelectorAll('.ql-img').forEach((img, i) => {
           if (i < index) {
             sumOfWidths += img.getBoundingClientRect().width + 8;
@@ -44,7 +57,6 @@ class ImageGrid extends BlockEmbed {
         });
         leftPosition = `${sumOfWidths}px`;
       }
-
       const guidelineElement = node.querySelector('.guideline');
       guidelineElement.style.left = leftPosition;
       guidelineElement.style.height = `${height}px`;
@@ -68,9 +80,9 @@ class ImageGrid extends BlockEmbed {
       dropHelper.addEventListener('drop', () => {
         hideDropHelper();
       });
-      dropHelperWrapper.appendChild(dropHelper);
+      dropHelperWrapperVertical.appendChild(dropHelper);
     }
-    dropHelperWrapper.addEventListener('dragleave', event => {
+    dropHelperWrapperVertical.addEventListener('dragleave', event => {
       if (
         event.fromElement &&
         !event.fromElement.classList.contains('image-grid-drop-helper')
@@ -79,6 +91,8 @@ class ImageGrid extends BlockEmbed {
       }
     });
 
+    dropHelperWrapper.appendChild(dropHelperTop);
+    dropHelperWrapper.appendChild(dropHelperWrapperVertical);
     node.appendChild(dropHelperWrapper);
 
     const imageGridItemWrapper = document.createElement('div');
@@ -161,16 +175,47 @@ class ImageGrid extends BlockEmbed {
     return MAX_IMAGE_LENGTH;
   }
 
+  value() {
+    const imageGridItemWrapper = this.domNode.querySelector('.image-grid-item-wrapper');
+    if (!imageGridItemWrapper.onclick) {
+      imageGridItemWrapper.onclick = event => {
+        if (event.target === imageGridItemWrapper) {
+          const sections = [];
+          sections.push({ start: 0, end: 8 });
+          _.map(
+            imageGridItemWrapper.querySelectorAll('.ql-img'),
+            el => el.getBoundingClientRect().width,
+          ).forEach((imageWidth, i) => {
+            const lastEnd = sections[i].end;
+            const start = lastEnd + imageWidth;
+            const end = start + 8;
+            sections.push({ start, end });
+          });
+          sections.forEach(({ start, end }, i) => {
+            if (start < event.offsetX && event.offsetX < end) {
+              this.showFakeCursor(i);
+              return false;
+            }
+          });
+        }
+      };
+    }
+    return super.value();
+  }
+
   showFakeCursor(index = 0) {
+    this.hideFakeCursor();
     const cursor = this.domNode.querySelector('.cursor');
     const { height } = this.domNode.querySelector('.ql-img img').getBoundingClientRect();
     cursor.style.height = `${height}px`;
 
     let leftPosition = '';
     if (index < 0) {
-      leftPosition = `calc(100% + 5px)`;
+      leftPosition = `calc(100% + 6px)`;
+    } else if (index === 0) {
+      leftPosition = `-6px`;
     } else {
-      let sumOfWidths = -5;
+      let sumOfWidths = -7;
       this.domNode.querySelectorAll('.ql-img').forEach((img, i) => {
         if (i < index) {
           sumOfWidths += img.getBoundingClientRect().width + 8;
@@ -182,7 +227,9 @@ class ImageGrid extends BlockEmbed {
     cursor.style.left = leftPosition;
     cursor.style.height = `${height}px`;
     cursor.style.display = 'block';
-
+    setTimeout(() => {
+      cursor.style.animation = 'blinker 1s step-end infinite';
+    }, 200);
     const maxCursorOffset = this.domNode.querySelectorAll('.ql-img').length;
     const cursorOffset = index < 0 ? maxCursorOffset : index;
     setTimeout(() => {
@@ -201,21 +248,26 @@ class ImageGrid extends BlockEmbed {
   hideFakeCursor() {
     const cursor = this.domNode.querySelector('.cursor');
     cursor.style.display = 'none';
+    cursor.style.animation = 'none';
     this.scroll.emitter.emit(Emitter.events.IMAGE_GRID_FOCUS, undefined);
   }
 
-  showDropHelper(isImageGridItemDragging) {
-    if (
-      !isImageGridItemDragging &&
-      this.domNode.querySelectorAll('.image-grid-item-container').length === MAX_IMAGE_LENGTH
-    ) {
+  showDropHelper(disableVerticalGiudeline) {
+    const dropHelperVertical = this.domNode.querySelector('.image-grid-drop-helper-wrapper-vertical');
+    const dropHelperTop = this.domNode.querySelector('.image-grid-drop-helper.top');
+    const dropHelper = this.domNode.querySelector('.image-grid-drop-helper-wrapper');
+    const { height } = this.domNode.querySelector('.ql-img').getBoundingClientRect();
+
+    if (disableVerticalGiudeline) {
+      dropHelperVertical.style.display = 'none';
+      dropHelperTop.style.height = `${height}px`;
+      dropHelper.style.display = 'block';
       return;
     }
-
-    const dropHelper = this.domNode.querySelector('.image-grid-drop-helper-wrapper');
-    const { height } = this.domNode.querySelector('.ql-img img').getBoundingClientRect();
-    dropHelper.style.height = `${height}px`;
-    dropHelper.style.display = 'flex';
+    dropHelperVertical.style.height = `${height}px`;
+    dropHelperVertical.style.display = 'flex';
+    dropHelperTop.style.height = '30px';
+    dropHelper.style.display = 'block';
   }
 
   hideDropHelper() {

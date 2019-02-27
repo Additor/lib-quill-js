@@ -14,6 +14,7 @@ class IndentAttributor extends ClassAttributor {
   }
 
   canAdd(node, value) {
+    if (node.tagName === 'IFRAME' || node.tagName === 'iframe') return false;
     return super.canAdd(node, value) || super.canAdd(node, parseInt(value, 10));
   }
 

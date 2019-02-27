@@ -289,6 +289,7 @@ class AdditorImage extends EmbedBlot {
 
     const cursor = this.domNode.querySelector('.cursor');
     const { width, height } = this.getImageRect();
+    // TODO: 이미지 width 최대일때 cursor left position 이상하게 잡힘 확인
     const alignStyle = this.getImageAlignedStatus();
     cursor.style.left = this.getVerticalBarPosition(alignStyle, isLeft, width);
     cursor.style.display = 'block';

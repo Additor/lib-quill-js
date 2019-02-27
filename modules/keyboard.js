@@ -189,11 +189,11 @@ Keyboard.DEFAULTS = {
       handler(range, context) {
         const { format, collapsed, offset } = context;
         if (collapsed && offset !== 0) return true;
-        if (_.isEmpty(format) || format.header || format.indent || format.list) {
-          this.quill.format('indent', '+1', Quill.sources.USER);
-          return false;
+        if (context.line.statics.blotName === 'embed') return false;
+        if (format['code-block'] || format.table) {
+          return true;
         }
-        return true;
+        this.quill.format('indent', '+1', Quill.sources.USER);
       },
     },
     outdent: {
@@ -203,11 +203,11 @@ Keyboard.DEFAULTS = {
       handler(range, context) {
         const { format, collapsed, offset } = context;
         if (collapsed && offset !== 0) return true;
-        if (_.isEmpty(format) || format.header || format.indent || format.list) {
-          this.quill.format('indent', '-1', Quill.sources.USER);
-          return false;
+        if (context.line.statics.blotName === 'embed') return false;
+        if (format['code-block'] || format.table || format.embed) {
+          return true;
         }
-        return true;
+        this.quill.format('indent', '-1', Quill.sources.USER);
       },
     },
     'outdent backspace': {
@@ -223,6 +223,7 @@ Keyboard.DEFAULTS = {
         if (context.format.indent != null) {
           this.quill.format('indent', '-1', Quill.sources.USER);
         } else if (context.format.list != null) {
+          this.quill.format('start', false, Quill.sources.USER);
           this.quill.format('list', false, Quill.sources.USER);
         }
       },
@@ -262,6 +263,15 @@ Keyboard.DEFAULTS = {
         this.quill.format('blockquote', false, Quill.sources.USER);
       },
     },
+    'indent empty enter': {
+      key: 'Enter',
+      collapsed: true,
+      format: ['indent'],
+      empty: true,
+      handler(range, context) {
+        this.quill.format('indent', false, Quill.sources.USER);
+      },
+    },
     'list empty enter': {
       key: 'Enter',
       collapsed: true,
@@ -269,9 +279,28 @@ Keyboard.DEFAULTS = {
       empty: true,
       handler(range, context) {
         this.quill.format('list', false, Quill.sources.USER);
+        this.quill.format('start', false, Quill.sources.USER);
         if (context.format.indent) {
           this.quill.format('indent', false, Quill.sources.USER);
         }
+      },
+    },
+    'list enter': {
+      key: 'Enter',
+      collapsed: true,
+      format: { list: 'ordered' },
+      handler(range) {
+        if (this.quill.scroll.composing) return;
+        const [line, offset] = this.quill.getLine(range.index);
+        const formats = extend({}, line.formats(), { list: 'ordered' });
+        const delta = new Delta()
+          .retain(range.index)
+          .insert('\n', formats)
+          .retain(line.length() - offset - 1)
+          .retain(1, { list: 'ordered', start: false });
+        this.quill.updateContents(delta, Quill.sources.USER);
+        this.quill.setSelection(range.index + 1, Quill.sources.USER);
+        this.quill.scrollIntoView();
       },
     },
     'checklist enter': {
@@ -279,6 +308,7 @@ Keyboard.DEFAULTS = {
       collapsed: true,
       format: { list: 'checked' },
       handler(range) {
+        if (this.quill.scroll.composing) return;
         const [line, offset] = this.quill.getLine(range.index);
         const formats = extend({}, line.formats(), { list: 'checked' });
         const delta = new Delta()
@@ -384,25 +414,25 @@ Keyboard.DEFAULTS = {
         header: false,
         table: false,
       },
-      prefix: /^\s*?(\d+\.|-|\*|\[ ?\]|\[x\])$/,
+      prefix: /^\s*?(\d+\.|-|\*|\[ ?\]|\[v\])$/,
       handler(range, context) {
-        if (this.quill.scroll.query('list') == null) return true;
-        const { length } = context.prefix;
+        const length = context.prefix.length;
         const [line, offset] = this.quill.getLine(range.index);
         if (offset > length) return true;
         let value;
+        // prefix 에서 start 번호를 뽑아냄
         switch (context.prefix.trim()) {
           case '[]':
           case '[ ]':
             value = 'unchecked';
-            break;
-          case '[x]':
+          break;
+          case '[v]':
             value = 'checked';
             break;
           case '-':
           case '*':
             value = 'bullet';
-            break;
+          break;
           default:
             value = 'ordered';
         }
@@ -411,8 +441,17 @@ Keyboard.DEFAULTS = {
         const delta = new Delta()
           .retain(range.index - offset)
           .delete(length + 1)
-          .retain(line.length() - 2 - offset)
-          .retain(1, { list: value });
+          .retain(line.length() - 2 - offset);
+
+        if (value === 'ordered') {
+          delta.retain(1, {
+            list: value,
+            start: Number(context.prefix.slice(0, -1)),
+          });
+        } else {
+          delta.retain(1, { list: value });
+        }
+
         this.quill.updateContents(delta, Quill.sources.USER);
         this.quill.history.cutoff();
         this.quill.setSelection(range.index - length, Quill.sources.SILENT);

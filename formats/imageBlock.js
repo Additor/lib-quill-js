@@ -29,6 +29,39 @@ class AdditorImage extends BlockEmbed {
     );
 
     const imageWrapper = document.createElement('DIV');
+    imageWrapper.classList.add('ql-img-wrapper');
+
+    function getVerticalBarPosition(isGuidelineLeft, imageWidth) {
+      let cursorPosition = '';
+      let alignStyle = null;
+      const styles = node.getAttribute('style');
+      if (styles) {
+        styles
+          .split(';')
+          .map(style => style.trim())
+          .forEach(style => {
+            const [styleName, styleValue] = style.split(': ');
+            if (styleName === 'float') {
+              alignStyle = styleValue;
+              return false;
+            }
+            return true;
+          });
+      }
+
+      if (alignStyle === 'left') {
+        cursorPosition = isGuidelineLeft ? `-2px` : `${imageWidth + 7}px`;
+      } else if (alignStyle === 'right') {
+        cursorPosition = isGuidelineLeft
+          ? `calc(100% - ${imageWidth + 8}px)`
+          : `calc(100% + 1px)`;
+      } else {
+        cursorPosition = isGuidelineLeft
+          ? `calc(50% - ${imageWidth / 2 + 5}px)`
+          : `calc(50% + ${imageWidth / 2 + 4}px)`;
+      }
+      return cursorPosition;
+    }
 
     const cursor = document.createElement('div');
     cursor.classList.add('vertical-bar', 'cursor');
@@ -68,60 +101,36 @@ class AdditorImage extends BlockEmbed {
     imageWrapper.setAttribute('contenteditable', 'false');
     imageWrapper.appendChild(captionInput);
 
-    function getGuidelinePosition(isGuidelineLeft, imageWidth) {
-      let cursorPosition = '';
-      let alignStyle = null;
-      const styles = node.getAttribute('style');
-      if (styles) {
-        styles
-          .split(';')
-          .map(style => style.trim())
-          .forEach(style => {
-            const [styleName, styleValue] = style.split(': ');
-            if (styleName === 'float') {
-              alignStyle = styleValue;
-              return false;
-            }
-            return true;
-          });
-      }
-
-      if (alignStyle === 'left') {
-        cursorPosition = isGuidelineLeft ? `-2px` : `${imageWidth + 7}px`;
-      } else if (alignStyle === 'right') {
-        cursorPosition = isGuidelineLeft
-          ? `calc(100% - ${imageWidth + 8}px)`
-          : `calc(100% + 1px)`;
-      } else {
-        cursorPosition = isGuidelineLeft
-          ? `calc(50% - ${imageWidth / 2 + 5}px)`
-          : `calc(50% + ${imageWidth / 2 + 4}px)`;
-      }
-      return cursorPosition;
-    }
+    const dropHelperTop = document.createElement('div');
+    dropHelperTop.classList.add('image-drop-helper', 'image-drop-helper-horizontal', 'top');
+    dropHelperTop.addEventListener('dragenter', () => {
+      guideline.style.display = 'none';
+      dropHelperTop.style.borderTop = '1px solid #7552f6';
+    });
 
     const dropHelperLeft = document.createElement('div');
-    dropHelperLeft.classList.add('image-drop-helper', 'left');
+    dropHelperLeft.classList.add('image-drop-helper', 'image-drop-helper-vertical', 'left');
     dropHelperLeft.addEventListener('dragenter', () => {
       const width = Number(node.getAttribute('width'));
       const height = width / Number(node.getAttribute('ratio'));
-      const position = getGuidelinePosition(true, width);
+      const position = getVerticalBarPosition(true, width);
       guideline.style.display = 'block';
       guideline.style.height = `${height}px`;
       guideline.style.left = position;
     });
 
     const dropHelperRight = document.createElement('div');
-    dropHelperRight.classList.add('image-drop-helper', 'right');
+    dropHelperRight.classList.add('image-drop-helper', 'image-drop-helper-vertical', 'right');
     dropHelperRight.addEventListener('dragenter', () => {
       const width = Number(node.getAttribute('width'));
       const height = width / Number(node.getAttribute('ratio'));
-      const position = getGuidelinePosition(false, width);
+      const position = getVerticalBarPosition(false, width);
       guideline.style.display = 'block';
       guideline.style.height = `${height}px`;
       guideline.style.left = position;
     });
 
+    node.appendChild(dropHelperTop);
     node.appendChild(dropHelperLeft);
     node.appendChild(dropHelperRight);
     node.appendChild(imageWrapper);
@@ -141,8 +150,11 @@ class AdditorImage extends BlockEmbed {
 
       dropHelperLeft.style.display = 'none';
       dropHelperRight.style.display = 'none';
+      dropHelperTop.style.display = 'none';
+      dropHelperTop.style.borderTop = 'none';
       guideline.style.display = 'none';
     });
+
     return node;
   }
 
@@ -219,21 +231,37 @@ class AdditorImage extends BlockEmbed {
           if (name === 'width') {
             const { ratio } = this.formats();
             if (ratio) {
-              const dropHelpers = this.domNode.querySelectorAll('.image-drop-helper');
+              const dropHelpers = this.domNode.querySelectorAll('.image-drop-helper-vertical');
               const width = Number(value);
               const height = width / ratio;
               dropHelpers.forEach(dropHelper => {
                 dropHelper.style.height = `${height}px`;
               });
+
+              const imageWrapper = this.domNode.querySelector('.ql-img-wrapper');
+              imageWrapper.addEventListener('click', event => {
+                if (event.target === imageWrapper) {
+                  const center = event.target.getBoundingClientRect().width / 2;
+                  this.showFakeCursor(event.offsetX < center);
+                }
+              });
             }
-          } else if (name === 'ratio') {
+          } else if (name === 'ratio') { // DomNode, event, listener를 받아서 처리하는 함수로 만들 수 있을 듯..
             const { width: imageWidth } = this.formats();
             if (imageWidth) {
-              const dropHelpers = this.domNode.querySelectorAll('.image-drop-helper');
+              const dropHelpers = this.domNode.querySelectorAll('.image-drop-helper-vertical');
               const width = Number(imageWidth);
               const height = width / value;
               dropHelpers.forEach(dropHelper => {
                 dropHelper.style.height = `${height}px`;
+              });
+
+              const imageWrapper = this.domNode.querySelector('.ql-img-wrapper');
+              imageWrapper.addEventListener('click', event => {
+                if (event.target === imageWrapper) {
+                  const center = event.target.getBoundingClientRect().width / 2;
+                  this.showFakeCursor(event.offsetX < center);
+                }
               });
             }
           }
@@ -300,6 +328,9 @@ class AdditorImage extends BlockEmbed {
     const alignStyle = this.getImageAlignedStatus();
     cursor.style.left = this.getVerticalBarPosition(alignStyle, isLeft, width);
     cursor.style.display = 'block';
+    setTimeout(() => {
+      cursor.style.animation = 'blinker 1s step-end infinite';
+    }, 200);
     cursor.style.height = `${height}px`;
     setTimeout(() => {
       this.scroll.domNode.blur();
@@ -315,17 +346,29 @@ class AdditorImage extends BlockEmbed {
 
   hideFakeCursor() {
     const cursor = this.domNode.querySelector('.cursor');
+    cursor.style.animation = 'none';
     cursor.style.display = 'none';
     this.scroll.emitter.emit(Emitter.events.IMAGE_FOCUS, undefined);
   }
 
-  showDropHelper() {
-    const dropHelpers = this.domNode.querySelectorAll('.image-drop-helper');
+  showDropHelper(disableVerticalGuideline) {
+    const dropHelpers = this.domNode.querySelectorAll('.image-drop-helper-vertical');
+    const dropHelperTop = this.domNode.querySelector('.image-drop-helper-horizontal');
     const { height } = this.getImageRect();
-    dropHelpers.forEach(dropHelper => {
-      dropHelper.style.height = `${height}px`;
-      dropHelper.style.display = 'block';
-    });
+
+    if (disableVerticalGuideline) {
+      dropHelpers.forEach(dropHelper => {
+        dropHelper.style.display = 'none';
+      });
+      dropHelperTop.style.height = `${height}px`;
+      dropHelperTop.style.display = 'block';
+    } else {
+      dropHelpers.forEach(dropHelper => {
+        dropHelper.style.height = `${height}px`;
+        dropHelper.style.display = 'block';
+      });
+      dropHelperTop.style.display = 'block';
+    }
   }
 
   hideDropHelper() {
