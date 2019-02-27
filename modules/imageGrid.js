@@ -429,6 +429,39 @@ class ImageGrid extends Module {
     // this.quill.setSelection(index, 0, Quill.sources.USER); // TODO: 키보드로 지운 경우 기존 커서 유지해줘야함... (fakeCursor인경우에는?)
   }
 
+  /**
+   * drop되었을 때 호출되는 함수
+   * @param {object} originBlotInfo
+   * @param {object} targetBlotInfo
+   */
+  dropBlotHandler(originBlotInfo, targetBlotInfo) {
+    const { originBlot = null, originIndexInGrid = null } = originBlotInfo;
+    const { targetBlot = null, targetIndexInGrid = null } = targetBlotInfo;
+
+    if (targetBlot.statics.blotName === 'image-grid') {
+      if (originBlot.statics.blotName === 'image-grid') {
+        if (targetBlot === originBlot) {
+          this.changeImageSquence(targetBlot, originIndexInGrid, targetIndexInGrid);
+        } else {
+          this.removeImageFromImageGrid(originBlot, originIndexInGrid, targetBlot, targetIndexInGrid);
+        }
+      } else if (originBlot.statics.blotName === 'image') {
+        this.insertImageToImageGrid(targetBlot, originBlot, targetIndexInGrid);
+      } else {
+        console.log('이상한걸 그리드에 넣으려고 한다!');
+      }
+    } else if (targetBlot.statics.blotName === 'image') {
+      this.insertImageGrid(originBlot, originIndexInGrid, targetBlot, targetIndexInGrid);
+    } else {
+      if (originBlot.statics.blotName === 'image-grid') {
+        this.removeImageFromImageGrid(originBlot, originIndexInGrid, targetBlot);
+      } else if (originBlot.statics.blotName === 'image') {
+        // 현재 이미지그리드에서 다른 텍스트라인으로 이동할때만 호출해서 여기로 들어올 일이 없음
+        console.log('그냥 예전처럼 이동시켜줘 ')
+      }
+    }
+  }
+
   listenImageGridFocus() {
     this.quill.on(Quill.events.IMAGE_GRID_FOCUS, data => {
       this.imageGridFocusData = data;

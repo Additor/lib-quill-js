@@ -99,9 +99,6 @@ class AdditorImage extends BlockEmbed {
       guideline.style.display = 'none';
       dropHelperTop.style.borderTop = '1px solid #7552f6';
     });
-    dropHelperTop.addEventListener('dragleave', () => {
-      dropHelperTop.style.borderTop = 'none';
-    });
 
     const dropHelperLeft = document.createElement('div');
     dropHelperLeft.classList.add('image-drop-helper', 'image-drop-helper-vertical', 'left');
@@ -145,6 +142,8 @@ class AdditorImage extends BlockEmbed {
 
       dropHelperLeft.style.display = 'none';
       dropHelperRight.style.display = 'none';
+      dropHelperTop.style.display = 'none';
+      dropHelperTop.style.borderTop = 'none';
       guideline.style.display = 'none';
     });
 
@@ -321,6 +320,9 @@ class AdditorImage extends BlockEmbed {
     const alignStyle = this.getImageAlignedStatus();
     cursor.style.left = this.getVerticalBarPosition(alignStyle, isLeft, width);
     cursor.style.display = 'block';
+    setTimeout(() => {
+      cursor.style.animation = 'blinker 1s step-end infinite';
+    }, 200);
     cursor.style.height = `${height}px`;
     setTimeout(() => {
       this.scroll.domNode.blur();
@@ -336,30 +338,38 @@ class AdditorImage extends BlockEmbed {
 
   hideFakeCursor() {
     const cursor = this.domNode.querySelector('.cursor');
+    cursor.style.animation = 'none';
     cursor.style.display = 'none';
     this.scroll.emitter.emit(Emitter.events.IMAGE_FOCUS, undefined);
   }
 
-  showDropHelper() {
+  showDropHelper(disableVerticalGuideline) {
     const dropHelpers = this.domNode.querySelectorAll('.image-drop-helper-vertical');
-    const { height } = this.getImageRect();
-    dropHelpers.forEach(dropHelper => {
-      dropHelper.style.height = `${height}px`;
-      dropHelper.style.display = 'block';
-    });
     const dropHelperTop = this.domNode.querySelector('.image-drop-helper-horizontal');
-    dropHelperTop.style.display = 'block';
+    const { height } = this.getImageRect();
+
+    if (disableVerticalGuideline) {
+      dropHelpers.forEach(dropHelper => {
+        dropHelper.style.display = 'none';
+      });
+      dropHelperTop.style.height = `${height}px`;
+      dropHelperTop.style.display = 'block';
+    } else {
+      dropHelpers.forEach(dropHelper => {
+        dropHelper.style.height = `${height}px`;
+        dropHelper.style.display = 'block';
+      });
+      dropHelperTop.style.display = 'block';
+    }
   }
 
   hideDropHelper() {
     const dropGuideline = this.domNode.querySelector('.guideline');
     dropGuideline.style.display = 'none';
-    const dropHelpers = this.domNode.querySelectorAll('.image-drop-helper-vertical');
+    const dropHelpers = this.domNode.querySelectorAll('.image-drop-helper');
     dropHelpers.forEach(dropHelper => {
       dropHelper.style.display = 'none';
     });
-    const dropHelperTop = this.domNode.querySelector('.image-drop-helper-horizontal');
-    dropHelperTop.style.display = 'none';
   }
 }
 

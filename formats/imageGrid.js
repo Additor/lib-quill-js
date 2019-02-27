@@ -197,6 +197,7 @@ class ImageGrid extends BlockEmbed {
   }
 
   showFakeCursor(index = 0) {
+    this.hideFakeCursor();
     const cursor = this.domNode.querySelector('.cursor');
     const { height } = this.domNode.querySelector('.ql-img img').getBoundingClientRect();
     cursor.style.height = `${height}px`;
@@ -219,7 +220,9 @@ class ImageGrid extends BlockEmbed {
     cursor.style.left = leftPosition;
     cursor.style.height = `${height}px`;
     cursor.style.display = 'block';
-
+    setTimeout(() => {
+      cursor.style.animation = 'blinker 1s step-end infinite';
+    }, 200);
     const maxCursorOffset = this.domNode.querySelectorAll('.ql-img').length;
     const cursorOffset = index < 0 ? maxCursorOffset : index;
     setTimeout(() => {
@@ -238,25 +241,22 @@ class ImageGrid extends BlockEmbed {
   hideFakeCursor() {
     const cursor = this.domNode.querySelector('.cursor');
     cursor.style.display = 'none';
+    cursor.style.animation = 'none';
     this.scroll.emitter.emit(Emitter.events.IMAGE_GRID_FOCUS, undefined);
   }
 
-  showDropHelper(isImageGridItemDragging) {
+  showDropHelper(disableVerticalGiudeline) {
     const dropHelperVertical = this.domNode.querySelector('.image-grid-drop-helper-wrapper-vertical');
     const dropHelperTop = this.domNode.querySelector('.image-grid-drop-helper.top');
     const dropHelper = this.domNode.querySelector('.image-grid-drop-helper-wrapper');
     const { height } = this.domNode.querySelector('.ql-img').getBoundingClientRect();
 
-    if (
-      !isImageGridItemDragging &&
-      this.domNode.querySelectorAll('.image-grid-item-container').length === MAX_IMAGE_LENGTH
-    ) {
+    if (disableVerticalGiudeline) {
       dropHelperVertical.style.display = 'none';
-      dropHelperTop.style.height = `${height + 30}px`;
+      dropHelperTop.style.height = `${height}px`;
       dropHelper.style.display = 'block';
       return;
     }
-
     dropHelperVertical.style.height = `${height}px`;
     dropHelperVertical.style.display = 'flex';
     dropHelperTop.style.height = '30px';
