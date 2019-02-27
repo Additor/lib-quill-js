@@ -434,7 +434,7 @@ class ImageGrid extends Module {
    * @param {object} originBlotInfo
    * @param {object} targetBlotInfo
    */
-  dropBlotHandler(originBlotInfo, targetBlotInfo) {
+  handleDrop(originBlotInfo, targetBlotInfo) {
     const { originBlot = null, originIndexInGrid = null } = originBlotInfo;
     const { targetBlot = null, targetIndexInGrid = null } = targetBlotInfo;
 
