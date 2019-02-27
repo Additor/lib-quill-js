@@ -141,27 +141,21 @@ class ImageGrid extends Module {
 
   insertImageToPrevLine(imageData, targetBlot) {
     const index = this.quill.getIndex(targetBlot);
-    this.quill.insertText(index, ' \n', 'user');
-    this.quill.removeFormat(index, 1, 'user');
-    this.quill.deleteText(index, 1, 'user');
 
     const {
       image: imageSrc,
       attributes: { caption, ratio, width, style }
     } = imageData;
 
-    const copiedImageDelta = new Delta()
-      .retain(index)
-      .delete(1)
-      .insert(
-        { image: imageSrc },
-        {
-          caption,
-          ratio,
-          width,
-          style,
-        },
-      );
+    const copiedImageDelta = new Delta().retain(index).insert(
+      { image: imageSrc },
+      {
+        caption,
+        ratio,
+        width,
+        style,
+      },
+    );
     this.quill.updateContents(copiedImageDelta, 'user');
 
     // TODO: comment 처리 필요
@@ -174,7 +168,7 @@ class ImageGrid extends Module {
   }
 
   insertImageGrid(originBlot, originIndexInBlot, targetImageBlot, dropHelperIndex) {
-    let imageGridData = null; // TODO: dropHelperIndex === 0 일때 노드 추가하면서 delete1 해야하는 이유가 뭘까 확인해보기
+    let imageGridData = null; // TODO: dropHelperIndex === -1 일때 노드 추가하면서 delete1 해야하는 이유가 뭘까 확인해보기
     if (originBlot.statics.blotName === 'image') {
       let images = null;
       if (dropHelperIndex === -1) { // top: -1
