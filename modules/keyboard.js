@@ -547,13 +547,45 @@ Keyboard.DEFAULTS = {
         return true;
       },
     },
-    'arrow up': {
+    'list arrow up': {
       key: 'ArrowUp',
       format: ['list'],
       handler(range, context) {
         const firstLine = this.quill.getLine(0);
         if (firstLine && firstLine[0]) {
           return firstLine[0] !== context.line;
+        }
+        return true;
+      },
+    },
+    'arrow up': {
+      key: 'ArrowUp',
+      handler(range, context) {
+        const { prev } = context.line;
+        if (prev) {
+          if (
+            prev.statics.blotName === 'image' ||
+            prev.statics.blotName === 'image-grid'
+          ) {
+            prev.showFakeCursor();
+            return false;
+          }
+        }
+        return true;
+      },
+    },
+    'arrow down': {
+      key: 'ArrowDown',
+      handler(range, context) {
+        const { next } = context.line;
+        if (next) {
+          if (
+            next.statics.blotName === 'image' ||
+            next.statics.blotName === 'image-grid'
+          ) {
+            next.showFakeCursor();
+            return false;
+          }
         }
         return true;
       },

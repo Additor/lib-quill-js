@@ -5,6 +5,8 @@ import Module from '../core/module';
 
 import ImageGridFormat from '../formats/imageGrid';
 
+const SHORTKEY = /Mac/i.test(navigator.platform) ? 'metaKey' : 'ctrlKey';
+
 class ImageGrid extends Module {
   constructor(...args) {
     super(...args);
@@ -32,6 +34,7 @@ class ImageGrid extends Module {
 
     const { cursorOffset, blot, maxCursorOffset } = this.imageGridFocusData;
     const imageGridIndex = this.quill.getIndex(blot);
+    const imageGridLastIndex = imageGridIndex + blot.length();
     const quillLength = this.quill.getLength();
     let prevented = false;
     switch (ev.keyCode) {
@@ -48,7 +51,14 @@ class ImageGrid extends Module {
         break;
       case 38: // arrow up
         if (imageGridIndex > 0) {
-          this.quill.setSelection(imageGridIndex - 1, 0, Quill.sources.USER);
+          if (cursorOffset === 0) {
+            const [imageBeforeLine] = this.quill.getLine(imageGridIndex - 1);
+            this.quill.setSelection(this.quill.getIndex(imageBeforeLine), 0, Quill.sources.USER);
+          } else {
+            this.quill.setSelection(imageGridIndex - 1, 0, Quill.sources.USER);
+          }
+        } else {
+          blot.showFakeCursor(0);
         }
         prevented = true;
         break;
@@ -61,8 +71,19 @@ class ImageGrid extends Module {
         prevented = true;
         break;
       case 40: // arrow down
-        if (imageGridIndex < quillLength) {
-          this.quill.setSelection(imageGridIndex + 1, 0, Quill.sources.USER);
+        if (imageGridLastIndex < quillLength - 1) {
+          if (cursorOffset === 0) {
+            this.quill.setSelection(imageGridLastIndex, 0, Quill.sources.USER);
+          } else {
+            const [nextLine] = this.quill.getLine(imageGridLastIndex);
+            this.quill.setSelection(
+              imageGridLastIndex + nextLine.length() - 1,
+              0,
+              Quill.sources.USER,
+            );
+          }
+        } else {
+          blot.showFakeCursor(maxCursorOffset);
         }
         prevented = true;
         break;
@@ -90,7 +111,18 @@ class ImageGrid extends Module {
             }
           }
         } else {
+          const targetBlotIndex = this.quill.getIndex(blot);
           this.removeImageFromImageGrid(blot, cursorOffset - 1);
+          const [afterLine] = this.quill.getLine(targetBlotIndex);
+          if (afterLine.statics.blotName === 'image') {
+            if (cursorOffset === 1) {
+              afterLine.showFakeCursor();
+            } else if (cursorOffset === 2) {
+              afterLine.showFakeCursor(false);
+            }
+          } else if (afterLine.statics.blotName === 'image-grid') {
+            afterLine.showFakeCursor(cursorOffset - 1);
+          }
         }
         prevented = true;
         break;
@@ -105,10 +137,61 @@ class ImageGrid extends Module {
             }
           }
         } else {
+          const targetBlotIndex = this.quill.getIndex(blot);
           this.removeImageFromImageGrid(blot, cursorOffset);
+          const [afterLine] = this.quill.getLine(targetBlotIndex);
+          if (afterLine.statics.blotName === 'image') {
+            if (cursorOffset === 0) {
+              afterLine.showFakeCursor();
+            } else {
+              afterLine.showFakeCursor(false);
+            }
+          } else if (afterLine.statics.blotName === 'image-grid') {
+            afterLine.showFakeCursor(cursorOffset);
+          }
+        }
+        break;
+      case 90: // z
+        if (ev[SHORTKEY]) {
+          if (ev.shiftKey) {
+            this.quill.history.redo();
+          } else {
+            this.quill.history.undo();
+          }
+          prevented = true;
+        }
+        break;
+      case 89: // y
+        if (ev[SHORTKEY]) {
+          if (/Win/i.test(navigator.platform)) {
+            this.quill.history.redo();
+            prevented = true;
+          }
         }
         break;
       default:
+        if (ev.key.length === 1) {
+          if (cursorOffset === 0) {
+            if (imageGridIndex === 0) {
+              this.quill.updateContents([{ insert: '\n' }]);
+            }
+            this.quill.setSelection(imageGridIndex - 1, 0, Quill.sources.USER);
+          } else {
+            const [nextLine] = this.quill.getLine(imageGridIndex + 1);
+            if (
+              imageGridIndex === quillLength - 1 ||
+              _.includes(nextLine.statics.blotName, 'image')
+            ) {
+              this.quill.updateContents(
+                new Delta()
+                  .retain(imageGridIndex + 1)
+                  .insert('\n'),
+                Quill.sources.USER,
+              );
+            }
+            this.quill.setSelection(imageGridIndex + 1, 0, Quill.sources.USER);
+          }
+        }
     }
     if (prevented) {
       ev.preventDefault();
@@ -294,7 +377,6 @@ class ImageGrid extends Module {
     const {
       'image-grid': { data: beforeData },
     } = targetBlot.delta().ops[0].insert;
-    debugger;
 
     const imageGridIndex = this.quill.getIndex(targetBlot);
     const afterData = [...beforeData];
@@ -328,9 +410,6 @@ class ImageGrid extends Module {
     const updateDelta = new Delta()
       .retain(targetBlotIndex)
       .insert(...nextOriginOps);
-    if (nextOriginData.length === 1) {
-      updateDelta.insert('\n');
-    }
     this.quill.updateContents(updateDelta, 'user');
     originBlot.remove();
 
@@ -377,7 +456,6 @@ class ImageGrid extends Module {
         this.quill.updateContents(imageInsertDelta, 'user');
       }
     }
-    // this.quill.setSelection(index, 0, Quill.sources.USER); // TODO: 키보드로 지운 경우 기존 커서 유지해줘야함... (fakeCursor인경우에는?)
   }
 
   listenImageGridFocus() {

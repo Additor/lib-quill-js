@@ -46,8 +46,12 @@ class Image extends Module {
         break;
       case 38: // arrow up
         if (imageIndex > 0) {
-          const [imageBeforeLine] = this.quill.getLine(imageIndex - 1);
-          this.quill.setSelection(this.quill.getIndex(imageBeforeLine), 0, Quill.sources.USER);
+          if (cursorOffset === 0) {
+            const [imageBeforeLine] = this.quill.getLine(imageIndex - 1);
+            this.quill.setSelection(this.quill.getIndex(imageBeforeLine), 0, Quill.sources.USER);
+          } else {
+            this.quill.setSelection(imageIndex - 1, 0, Quill.sources.USER);
+          }
         }
         prevented = true;
         break;
@@ -61,7 +65,12 @@ class Image extends Module {
         break;
       case 40: // arrow down
         if (imageLastIndex < quillLength - 1) {
-          this.quill.setSelection(imageLastIndex, 0, Quill.sources.USER);
+          if (cursorOffset === 0) {
+            this.quill.setSelection(imageLastIndex, 0, Quill.sources.USER);
+          } else {
+            const [nextLine] = this.quill.getLine(imageLastIndex);
+            this.quill.setSelection(imageLastIndex + nextLine.length() - 1, 0, Quill.sources.USER);
+          }
         }
         prevented = true;
         break;
@@ -116,10 +125,22 @@ class Image extends Module {
         break;
       default:
         if (ev.key.length === 1) {
-          if (imageIndex === 0) {
-            this.quill.updateContents([{ insert: '\n' }]);
+          if (cursorOffset === 0) {
+            if (imageIndex === 0) {
+              this.quill.updateContents([{ insert: '\n' }]);
+            }
+            this.quill.setSelection(imageIndex - 1, 0, Quill.sources.USER);
+          } else {
+            if (imageIndex === quillLength - 1) {
+              this.quill.updateContents(
+                new Delta()
+                  .retain(imageIndex + 1)
+                  .insert('\n'),
+                Quill.sources.USER,
+              );
+            }
+            this.quill.setSelection(imageIndex + 1, 0, Quill.sources.USER);
           }
-          this.quill.setSelection(imageIndex - 1, 0, Quill.sources.USER);
         }
     }
 

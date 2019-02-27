@@ -1,10 +1,12 @@
-import _ from 'lodash';
 import { sanitize } from '../formats/link';
 import Emitter from '../core/emitter';
-import Quill from '../core/quill';
 import { BlockEmbed } from '../blots/block';
 
 const MAX_IMAGE_LENGTH = 3;
+
+function isDisabled() {
+  return !!document.querySelector('.ql-disabled');
+}
 
 class ImageGrid extends BlockEmbed {
   constructor(scroll, domNode) {
@@ -99,9 +101,13 @@ class ImageGrid extends BlockEmbed {
       const captionElement = document.createElement('input');
       captionElement.setAttribute('type', 'text');
       captionElement.setAttribute('maxlength', '40');
-      captionElement.setAttribute('placeholder', 'Write a caption');
       captionElement.setAttribute('spellcheck', 'false');
       captionElement.classList.add('caption');
+      if (isDisabled()) {
+        captionElement.setAttribute('readonly', true);
+      } else {
+        captionElement.setAttribute('placeholder', 'Write a caption');
+      }
       captionElement.value = caption;
       captionElement.addEventListener('click', ev => {
         ev.stopPropagation();

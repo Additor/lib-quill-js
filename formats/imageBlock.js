@@ -12,6 +12,10 @@ const ImageFormatAttributesList = [
   'ratio', // width / height
 ];
 
+function isDisabled() {
+  return !!document.querySelector('.ql-disabled');
+}
+
 class AdditorImage extends BlockEmbed {
   static create(value) {
     const node = super.create(value);
@@ -54,9 +58,13 @@ class AdditorImage extends BlockEmbed {
       }
     });
     captionInput.setAttribute('type', 'text');
-    captionInput.setAttribute('placeholder', 'Write a caption');
     captionInput.setAttribute('spellcheck', 'false');
     captionInput.classList.add('caption');
+    if (isDisabled()) {
+      captionInput.setAttribute('readonly', true);
+    } else {
+      captionInput.setAttribute('placeholder', 'Write a caption');
+    }
     imageWrapper.setAttribute('contenteditable', 'false');
     imageWrapper.appendChild(captionInput);
 
@@ -287,7 +295,6 @@ class AdditorImage extends BlockEmbed {
   showFakeCursor(isLeft = true) {
     this.hideFakeCursor();
 
-    debugger;
     const cursor = this.domNode.querySelector('.cursor');
     const { width, height } = this.getImageRect();
     const alignStyle = this.getImageAlignedStatus();

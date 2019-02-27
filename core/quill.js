@@ -407,6 +407,17 @@ class Quill {
       this.selection.setRange(null, length || Quill.sources.API);
     } else {
       [index, length, , source] = overload(index, length, source);
+      const [line] = this.scroll.line(index);
+      if (line && line.statics) {
+        const { blotName } = line.statics;
+        if (blotName === 'image-grid') {
+          line.showFakeCursor(0);
+          return;
+        } else if (blotName === 'image') {
+          line.showFakeCursor();
+          return;
+        }
+      }
       this.selection.setRange(new Range(Math.max(0, index), length), source);
       if (source !== Emitter.sources.SILENT) {
         this.selection.scrollIntoView(this.scrollingContainer);

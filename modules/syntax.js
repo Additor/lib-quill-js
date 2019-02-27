@@ -220,6 +220,13 @@ class Syntax extends Module {
 
   highlight(blot = null, force = false) {
     if (this.quill.selection.composing) return;
+    if (
+      document.activeElement &&
+      document.activeElement.classList.contains('caption')
+    ) {
+      // 캡션이 포커스 되어 있을 때, 커서가 튀는 현상 방지
+      return;
+    }
     this.quill.update(Quill.sources.USER);
     const range = this.quill.getSelection();
     const blots =
