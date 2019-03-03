@@ -373,8 +373,8 @@ class ImageGrid extends Module {
       .insert(...nextLeftOps)
       .insert(...nextRightOps)
       .delete(1);
-    // this.quill.setSelection(originImageGridIndex, 0, Quill.sources.USER); // TODO: 뒤 이미지의 왼쪽 fakeCursor 보여주기
     this.quill.updateContents(updateDelta, 'user');
+    this.quill.setSelection(originImageGridIndex + 1, 0, Quill.sources.USER);
   }
 
   insertImageToImageGrid(targetBlot, newImageBlot, dropIndex) {
