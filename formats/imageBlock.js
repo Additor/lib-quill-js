@@ -77,6 +77,10 @@ class AdditorImage extends BlockEmbed {
     if (typeof value === 'string') {
       image.setAttribute('src', this.sanitize(value));
     }
+    image.classList.add('fade-in-and-scale-up');
+    image.addEventListener('animationend', () => {
+      image.classList.remove('fade-in-and-scale-up');
+    });
     imageWrapper.appendChild(image);
 
     const captionInput = document.createElement('INPUT');

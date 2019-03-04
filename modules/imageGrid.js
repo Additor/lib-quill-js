@@ -227,7 +227,7 @@ class ImageGrid extends Module {
 
     const {
       image: imageSrc,
-      attributes: { caption, ratio, width, style }
+      attributes: { caption, ratio, width, style },
     } = imageData;
 
     const copiedImageDelta = new Delta().retain(index).insert(
@@ -240,14 +240,18 @@ class ImageGrid extends Module {
       },
     );
     this.quill.updateContents(copiedImageDelta, 'user');
+  }
 
-    // TODO: comment 처리 필요
-    // const originImg = originBlot.domNode; // ?코멘트 어케 바뀌나??
-    // if (_.toUpper(originImg.parentNode.nodeName) === 'COMMENT') {
-    //   // 코멘트가 있는 이미지인 경우 코멘트도 이동시켜준다.
-    //   const commentIds = _.toArray(originImg.parentNode.classList);
-    //   this.quill.formatText(index, 1, 'inline-comment', commentIds, 'user-comment');
-    // }
+  shrink(targetNode, beforeShrink, afterShrink) {
+    if (beforeShrink && typeof beforeShrink === 'function') {
+      beforeShrink();
+    }
+    targetNode.addEventListener('animationend', () => {
+      if (afterShrink && typeof afterShrink === 'function') {
+        afterShrink();
+      }
+    });
+    targetNode.classList.add('fade-out-and-scale-down');
   }
 
   insertImageGrid(originBlot, originIndexInBlot, targetImageBlot, dropHelperIndex) {
@@ -266,15 +270,21 @@ class ImageGrid extends Module {
           },
           targetImageBlot,
         );
-        // TODO: comment 처리 필요함
 
-        const originBlotIndex = this.quill.getIndex(originBlot);
-        const originImageDeleteDelta = new Delta()
-          .retain(originBlotIndex)
-          .delete(1);
-        this.quill.updateContents(originImageDeleteDelta, 'user');
-        this.quill.setSelection(null);
-
+        this.shrink(
+          originBlot.domNode.querySelector('img'),
+          () => {
+            originBlot.domNode.querySelector('.caption').style.display = 'none';
+          },
+          () => {
+            const originBlotIndex = this.quill.getIndex(originBlot);
+            const originImageDeleteDelta = new Delta()
+              .retain(originBlotIndex)
+              .delete(1);
+            this.quill.updateContents(originImageDeleteDelta, 'user');
+            this.quill.setSelection(null);
+          },
+        );
         return;
       } else if (dropHelperIndex === 0) {
         images = [originBlot, targetImageBlot];
@@ -300,11 +310,19 @@ class ImageGrid extends Module {
 
         return imageData;
       });
-      const originBlotIndex = this.quill.getIndex(originBlot);
-      const originImageDeleteDelta = new Delta()
-        .retain(originBlotIndex)
-        .delete(1);
-      this.quill.updateContents(originImageDeleteDelta, 'user');
+      this.shrink(
+        originBlot.domNode.querySelector('img'),
+        () => {
+          originBlot.domNode.querySelector('.caption').style.display = 'none';
+        },
+        () => {
+          const originBlotIndex = this.quill.getIndex(originBlot);
+          const originImageDeleteDelta = new Delta()
+            .retain(originBlotIndex)
+            .delete(1);
+          this.quill.updateContents(originImageDeleteDelta, 'user');
+        },
+      );
     } else if (originBlot.statics.blotName === 'image-grid') { // 지우기
       const prevOriginData = this.getDataFromImageGridBlot(originBlot);
       const nextOriginData = [...prevOriginData];
@@ -386,9 +404,16 @@ class ImageGrid extends Module {
       attributes: newImageBlot.formats(),
     };
     if (dropIndex === -1) {
-      // TODO: comment 처리 필요
       this.insertImageToPrevLine(newImageData, targetBlot);
-      newImageBlot.remove();
+      this.shrink(
+        newImageBlot.domNode.querySelector('img'),
+        () => {
+          newImageBlot.domNode.querySelector('.caption').style.display = 'none';
+        },
+        () => {
+          newImageBlot.remove();
+        },
+      );
       return;
     }
     nextTargetData.splice(dropIndex, 0, newImageData);
@@ -400,7 +425,16 @@ class ImageGrid extends Module {
       .insert(...nextTargetOps);
     this.quill.updateContents(updateDelta, 'user');
     targetBlot.remove();
-    newImageBlot.remove();
+
+    this.shrink(
+      newImageBlot.domNode.querySelector('img'),
+      () => {
+        newImageBlot.domNode.querySelector('.caption').style.display = 'none';
+      },
+      () => {
+        newImageBlot.remove();
+      },
+    );
   }
 
   changeImageSquence(targetBlot, originItemIndex, dropIndex) {
