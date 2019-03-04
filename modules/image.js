@@ -3,6 +3,8 @@ import Quill from '../core/quill';
 import Module from '../core/module';
 import image from '../formats/imageBlock';
 
+const SHORT_KEY = /Mac/i.test(navigator.platform) ? 'metaKey' : 'ctrlKey';
+
 class Image extends Module {
   static register() {
     Quill.register(image);
@@ -120,6 +122,24 @@ class Image extends Module {
             } else {
               this.quill.setSelection(imageIndex + 1, 0, Quill.sources.USER);
             }
+          }
+        }
+        break;
+      case 90: // z
+        if (ev[SHORT_KEY]) {
+          if (ev.shiftKey) {
+            this.quill.history.redo();
+          } else {
+            this.quill.history.undo();
+          }
+          prevented = true;
+        }
+        break;
+      case 89: // y
+        if (ev[SHORT_KEY]) {
+          if (/Win/i.test(navigator.platform)) {
+            this.quill.history.redo();
+            prevented = true;
           }
         }
         break;

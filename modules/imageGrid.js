@@ -5,7 +5,7 @@ import Module from '../core/module';
 
 import ImageGridFormat from '../formats/imageGrid';
 
-const SHORTKEY = /Mac/i.test(navigator.platform) ? 'metaKey' : 'ctrlKey';
+const SHORT_KEY = /Mac/i.test(navigator.platform) ? 'metaKey' : 'ctrlKey';
 
 class ImageGrid extends Module {
   constructor(...args) {
@@ -151,7 +151,7 @@ class ImageGrid extends Module {
         }
         break;
       case 90: // z
-        if (ev[SHORTKEY]) {
+        if (ev[SHORT_KEY]) {
           if (ev.shiftKey) {
             this.quill.history.redo();
           } else {
@@ -161,7 +161,7 @@ class ImageGrid extends Module {
         }
         break;
       case 89: // y
-        if (ev[SHORTKEY]) {
+        if (ev[SHORT_KEY]) {
           if (/Win/i.test(navigator.platform)) {
             this.quill.history.redo();
             prevented = true;

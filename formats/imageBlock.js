@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import { sanitize } from '../formats/link';
 import Emitter from '../core/emitter';
 import { BlockEmbed } from '../blots/block';
@@ -10,6 +11,7 @@ const ImageFormatAttributesList = [
   'image-style',
   'caption',
   'ratio', // width / height
+  'inline-comment',
 ];
 
 function isDisabled() {
@@ -194,6 +196,13 @@ class AdditorImage extends BlockEmbed {
         return formats;
       }
 
+      if (attribute === 'inline-comment') {
+        formats[attribute] = _.filter(domNode.classList, className => {
+          return _.includes(className, 'comment_');
+        });
+        return formats;
+      }
+
       if (domNode.hasAttribute(attribute)) {
         formats[attribute] = domNode.getAttribute(attribute);
       }
@@ -270,7 +279,21 @@ class AdditorImage extends BlockEmbed {
         }
       }
 
-      if (value) {
+      if (name === 'inline-comment') {
+        if (_.isArray(value)) {
+          _.forEach(value, commentId => {
+            if (_.includes(commentId, 'comment_')) {
+              this.domNode.classList.add(commentId);
+            }
+          });
+        } else if (value.cid) {
+          let commentId = value.cid;
+          if (!_.includes(commentId, 'comment_')) {
+            commentId = `comment_${commentId}`;
+          }
+          this.domNode.classList.add(commentId);
+        }
+      } else if (value) {
         this.domNode.setAttribute(name, value);
       } else {
         this.domNode.removeAttribute(name);
