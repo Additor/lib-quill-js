@@ -171,6 +171,10 @@ class ImageGrid extends BlockEmbed {
     return sanitize(url, ['http', 'https', 'data']) ? url : '//:0';
   }
 
+  sanitize(url) {
+    return sanitize(url, ['http', 'https', 'data']) ? url : '//:0';
+  }
+
   static getMaxLength() {
     return MAX_IMAGE_LENGTH;
   }
@@ -201,6 +205,140 @@ class ImageGrid extends BlockEmbed {
       };
     }
     return super.value();
+  }
+
+  static formats(domNode) {
+    const data = JSON.parse(domNode.getAttribute('image-grid-data'));
+    const result = {
+      data,
+    };
+    return result;
+  }
+
+  format(format, value) {
+    if (format === 'created-data') {
+      const { index: newImageIndex, animation } = value;
+      const imageGridItemWrapper = this.domNode.querySelector('.image-grid-item-wrapper');
+      const animationTarget = imageGridItemWrapper.querySelector(`.image-grid-item-container:nth-of-type(${newImageIndex + 1})`)
+      animationTarget.addEventListener('animationend', () => {
+        animationTarget.classList.remove(animation);
+      });
+      animationTarget.classList.add(animation);
+    } else if (format === 'add-data') {
+      const { data: nextData } = value;
+      let { index: dropIndex } = value;
+      if (dropIndex === MAX_IMAGE_LENGTH) {
+        dropIndex -= 1;
+      }
+      const sumOfRatios = nextData.reduce((accumulator, { attributes: { ratio } }) => accumulator + Number(ratio), 0);
+      const [newImage] = nextData.slice(dropIndex, dropIndex + 1);
+
+      // add dropHelper
+      const dropHelperWrapperVertical = this.domNode.querySelector('.image-grid-drop-helper-wrapper-vertical');
+      this.domNode.querySelector('.image-grid-drop-helper-wrapper-vertical').innerHTML = '';
+      for (let i = 0; i <= nextData.length; i++) {
+        const dropHelper = document.createElement('div');
+        dropHelper.classList.add('image-grid-drop-helper');
+        dropHelper.setAttribute('drop-index', i);
+        dropHelper.addEventListener('dragenter', () => {
+          this.showGuideline(i);
+        });
+        dropHelper.addEventListener('drop', () => {
+          this.hideDropHelper();
+        });
+        dropHelperWrapperVertical.appendChild(dropHelper);
+      }
+
+      // create new image element
+      const {
+        image: imageSrc,
+        attributes: { caption, 'inline-comment': inlineComment },
+      } = newImage;
+
+      const imaegGridItemContainer = document.createElement('DIV');
+
+      const imageElement = document.createElement('IMG');
+      imageElement.setAttribute('src', this.sanitize(imageSrc));
+      imageElement.setAttribute('caption', caption);
+
+      const captionElement = document.createElement('input');
+      captionElement.setAttribute('type', 'text');
+      captionElement.setAttribute('maxlength', '40');
+      captionElement.setAttribute('spellcheck', 'false');
+      captionElement.classList.add('caption');
+      if (isDisabled()) {
+        captionElement.setAttribute('readonly', true);
+      } else {
+        captionElement.setAttribute('placeholder', 'Write a caption');
+      }
+      captionElement.value = caption;
+      captionElement.addEventListener('click', ev => {
+        ev.stopPropagation();
+      });
+      captionElement.addEventListener('keydown', ev => {
+        // Enter, Tab, Escape
+        if (ev.keyCode === 13 || ev.keyCode === 9 || ev.keyCode === 27) {
+          ev.preventDefault();
+        } else {
+          ev.stopPropagation();
+        }
+      });
+
+      imaegGridItemContainer.classList.add('image-grid-item-container', 'ql-img');
+      if (inlineComment && inlineComment.length > 0) {
+        inlineComment.forEach(commentId => {
+          imaegGridItemContainer.classList.add(commentId);
+        });
+      }
+      imaegGridItemContainer.appendChild(imageElement);
+      imaegGridItemContainer.appendChild(captionElement);
+      imaegGridItemContainer.setAttribute('contenteditable', 'false');
+
+      // insert new image element to ImageGrid
+      const imageGridItemWrapper = this.domNode.querySelector('.image-grid-item-wrapper');
+      imageGridItemWrapper
+        .querySelectorAll('.image-grid-item-container')
+        .forEach(imageGridItemContainer => {
+          imageGridItemContainer.classList.remove('left', 'right');
+        });
+      this.domNode
+        .querySelector('.image-grid-item-wrapper')
+        .insertBefore(
+          imaegGridItemContainer,
+          imageGridItemWrapper.querySelector(`.image-grid-item-container:nth-of-type(${dropIndex + 1})`),
+        );
+
+      // adjust width
+      imageGridItemWrapper
+        .querySelectorAll('.image-grid-item-container')
+        .forEach((eachImage, i) => {
+          const { ratio } = nextData[i].attributes;
+          eachImage.style.width = `${(Number(ratio) * 100) / sumOfRatios}%`;
+          eachImage.setAttribute('item-index', i);
+          eachImage.classList.remove('left', 'right');
+        });
+      imageGridItemWrapper.firstElementChild.classList.add('left');
+      imageGridItemWrapper.lastElementChild.classList.add('right');
+      this.domNode.setAttribute('image-grid-data', JSON.stringify(nextData));
+      return;
+    } else if (format === 'remove-data') {
+      const { data: nextData, index: removeIndex } = value;
+      const sumOfRatios = nextData.reduce((accumulator, { attributes: { ratio } }) => accumulator + Number(ratio), 0);
+
+      const imageGridItemWrapper = this.domNode.querySelector('.image-grid-item-wrapper');
+      imageGridItemWrapper.querySelector(`.image-grid-item-container:nth-of-type(${removeIndex + 1})`).remove();
+      imageGridItemWrapper
+        .querySelectorAll('.image-grid-item-container')
+        .forEach((eachImage, i) => {
+          const { ratio } = nextData[i].attributes;
+          eachImage.style.width = `${(Number(ratio) * 100) / sumOfRatios}%`;
+          eachImage.setAttribute('item-index', i);
+          eachImage.classList.remove('left', 'right');
+        });
+      this.domNode.setAttribute('image-grid-data', JSON.stringify(nextData));
+      return;
+    }
+    super.format(format, value);
   }
 
   showFakeCursor(index = 0) {
@@ -250,6 +388,25 @@ class ImageGrid extends BlockEmbed {
     cursor.style.display = 'none';
     cursor.style.animation = 'none';
     this.scroll.emitter.emit(Emitter.events.IMAGE_GRID_FOCUS, undefined);
+  }
+
+  showGuideline(index) {
+    const { height } = this.domNode.querySelector('.ql-img img').getBoundingClientRect();
+
+    let leftPosition = '-6px';
+    if (index > 0) {
+      let sumOfWidths = -6;
+      this.domNode.querySelectorAll('.ql-img').forEach((img, i) => {
+        if (i < index) {
+          sumOfWidths += img.getBoundingClientRect().width + 8;
+        }
+      });
+      leftPosition = `${sumOfWidths}px`;
+    }
+    const guidelineElement = this.domNode.querySelector('.guideline');
+    guidelineElement.style.left = leftPosition;
+    guidelineElement.style.height = `${height}px`;
+    guidelineElement.style.display = 'block';
   }
 
   showDropHelper(disableVerticalGiudeline) {
