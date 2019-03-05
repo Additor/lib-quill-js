@@ -1,7 +1,7 @@
 import Delta from 'quill-delta';
 import Quill from '../core/quill';
 import Module from '../core/module';
-import image from '../formats/imageBlock';
+import image from '../formats/image';
 
 const SHORT_KEY = /Mac/i.test(navigator.platform) ? 'metaKey' : 'ctrlKey';
 
@@ -32,7 +32,10 @@ class Image extends Module {
 
     const { cursorOffset, blot } = this.imageFocusData;
     const imageIndex = this.quill.getIndex(blot);
-    const imageLastIndex = imageIndex + blot.length();
+    let imageLastIndex = imageIndex + blot.length();
+    if (blot.statics.blotName === 'image') {
+      imageLastIndex += 1;
+    }
     const quillLength = this.quill.getLength();
     let prevented = false;
     switch (ev.keyCode) { //TODO: shift selection 처리 필요

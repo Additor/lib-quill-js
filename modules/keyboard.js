@@ -11,8 +11,10 @@ import Module from '../core/module';
 import AdditorImage from '../formats/image';
 
 const debug = logger('quill:keyboard');
-
 const SHORTKEY = /Mac/i.test(navigator.platform) ? 'metaKey' : 'ctrlKey';
+const isImageBlot = (blot) => {
+
+};
 
 class Keyboard extends Module {
   static match(evt, binding) {
@@ -519,19 +521,9 @@ Keyboard.DEFAULTS = {
             return false;
           }
 
-          if (prevLine.statics.blotName === 'image') {
-            prevLine.showFakeCursor(false);
-            return false;
-          }
-
-          const { head: firstChild, tail: lastChild } = prevLine.children;
-          if (
-            firstChild &&
-            lastChild &&
-            firstChild === lastChild &&
-            firstChild instanceof AdditorImage
-          ) {
-            firstChild.showFakeCursor(false);
+          const [imageBlot] = prevLine.descendant(AdditorImage);
+          if (imageBlot) {
+            imageBlot.showFakeCursor(false);
             return false;
           }
         }
@@ -564,22 +556,14 @@ Keyboard.DEFAULTS = {
             return false;
           }
 
-          if (
-            nextLine.statics.blotName === 'image-grid' ||
-            nextLine.statics.blotName === 'image'
-          ) {
+          if (nextLine.statics.blotName === 'image-grid') {
             nextLine.showFakeCursor();
             return false;
           }
 
-          const { head: firstChild, tail: lastChild } = nextLine.children;
-          if (
-            firstChild &&
-            lastChild &&
-            firstChild === lastChild &&
-            firstChild instanceof AdditorImage
-          ) {
-            firstChild.showFakeCursor();
+          const [imageBlot] = nextLine.descendant(AdditorImage);
+          if (imageBlot) {
+            imageBlot.showFakeCursor();
             return false;
           }
         }
@@ -602,11 +586,14 @@ Keyboard.DEFAULTS = {
       handler(range, context) {
         const { prev } = context.line;
         if (prev) {
-          if (
-            prev.statics.blotName === 'image' ||
-            prev.statics.blotName === 'image-grid'
-          ) {
+          if (prev.statics.blotName === 'image-grid') {
             prev.showFakeCursor();
+            return false;
+          }
+
+          const [imageBlot] = prev.descendant(AdditorImage);
+          if (imageBlot) {
+            imageBlot.showFakeCursor();
             return false;
           }
         }
@@ -618,11 +605,14 @@ Keyboard.DEFAULTS = {
       handler(range, context) {
         const { next } = context.line;
         if (next) {
-          if (
-            next.statics.blotName === 'image' ||
-            next.statics.blotName === 'image-grid'
-          ) {
+          if (next.statics.blotName === 'image-grid') {
             next.showFakeCursor();
+            return false;
+          }
+
+          const [imageBlot] = next.descendant(AdditorImage);
+          if (imageBlot) {
+            imageBlot.showFakeCursor();
             return false;
           }
         }
@@ -652,14 +642,9 @@ Keyboard.DEFAULTS = {
             return false;
           }
 
-          const { head: firstChild, tail: lastChild } = prevLine.children;
-          if (
-            firstChild &&
-            lastChild &&
-            firstChild === lastChild &&
-            firstChild instanceof AdditorImage
-          ) {
-            firstChild.showFakeCursor(false);
+          const [imageBlot] = prevLine.descendant(AdditorImage);
+          if (imageBlot) {
+            imageBlot.showFakeCursor(false);
             if (context.line.length() === 1) {
               context.line.remove();
             }

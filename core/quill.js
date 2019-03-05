@@ -75,9 +75,6 @@ class Quill {
     this.container.innerHTML = '';
     instances.set(this.container, this);
     this.root = this.addContainer('ql-editor');
-    // this.root.addEventListener('dragstart', e => {
-    //   e.preventDefault();
-    // }); // 드래그 이벤트를 막는것 방지를 위한 주석처리
     this.root.classList.add('ql-blank');
     this.root.setAttribute('data-gramm', false);
     this.scrollingContainer = this.options.scrollingContainer || this.root;
@@ -432,7 +429,7 @@ class Quill {
         if (blotName === 'image-grid') {
           line.showFakeCursor(0);
           return;
-        } else if (blotName === 'image') {
+        } else if (line.firstChild && line.firstChild.blotName === 'image') {
           line.showFakeCursor();
           return;
         }
