@@ -12,6 +12,10 @@ const ImageFormatAttributesList = [
   'ratio', // width / height
 ];
 
+function isDisabled() {
+  return !!document.querySelector('.ql-disabled');
+}
+
 class AdditorImage extends EmbedBlot {
   static create(value) {
     const node = super.create(value);
@@ -25,42 +29,9 @@ class AdditorImage extends EmbedBlot {
     );
 
     const imageWrapper = document.createElement('DIV');
+    imageWrapper.classList.add('ql-img-wrapper');
 
-    const cursor = document.createElement('div');
-    cursor.classList.add('vertical-bar', 'cursor');
-    const guideline = document.createElement('div');
-    guideline.classList.add('vertical-bar', 'guideline');
-
-    imageWrapper.appendChild(cursor);
-    imageWrapper.appendChild(guideline);
-
-    const image = document.createElement('IMG');
-    if (typeof value === 'string') {
-      image.setAttribute('src', this.sanitize(value));
-    }
-    imageWrapper.appendChild(image);
-
-    const captionInput = document.createElement('INPUT');
-    captionInput.setAttribute('maxlength', '40');
-    captionInput.addEventListener('click', ev => {
-      ev.stopPropagation();
-    });
-    captionInput.addEventListener('keydown', ev => {
-      // Enter, Tab, Escape
-      if (ev.keyCode === 13 || ev.keyCode === 9 || ev.keyCode === 27) {
-        ev.preventDefault();
-      } else {
-        ev.stopPropagation();
-      }
-    });
-    captionInput.setAttribute('type', 'text');
-    captionInput.setAttribute('placeholder', 'Write a caption');
-    captionInput.setAttribute('spellcheck', 'false');
-    captionInput.classList.add('caption');
-    imageWrapper.setAttribute('contenteditable', 'false');
-    imageWrapper.appendChild(captionInput);
-
-    function getGuidelinePosition(isGuidelineLeft, imageWidth) {
+    function getVerticalBarPosition(isGuidelineLeft, imageWidth) {
       let cursorPosition = '';
       let alignStyle = null;
       const styles = node.getAttribute('style');
@@ -92,28 +63,81 @@ class AdditorImage extends EmbedBlot {
       return cursorPosition;
     }
 
+    const cursor = document.createElement('div');
+    cursor.classList.add('vertical-bar', 'cursor');
+    const guideline = document.createElement('div');
+    guideline.classList.add('vertical-bar', 'guideline');
+
+    imageWrapper.appendChild(cursor);
+    imageWrapper.appendChild(guideline);
+
+    const image = document.createElement('IMG');
+    if (typeof value === 'string') {
+      image.setAttribute('src', this.sanitize(value));
+    }
+    image.classList.add('fade-in-and-scale-up');
+    image.addEventListener('animationend', () => {
+      image.classList.remove('fade-in-and-scale-up');
+    });
+    imageWrapper.appendChild(image);
+
+    const captionInput = document.createElement('INPUT');
+    captionInput.setAttribute('maxlength', '40');
+    captionInput.addEventListener('mousedown', ev => {
+      ev.stopPropagation();
+    });
+    captionInput.addEventListener('click', ev => {
+      ev.stopPropagation();
+    });
+    captionInput.addEventListener('keydown', ev => {
+      // Enter, Tab, Escape
+      if (ev.keyCode === 13 || ev.keyCode === 9 || ev.keyCode === 27) {
+        ev.preventDefault();
+      } else {
+        ev.stopPropagation();
+      }
+    });
+    captionInput.setAttribute('type', 'text');
+    captionInput.setAttribute('spellcheck', 'false');
+    captionInput.classList.add('caption');
+    if (isDisabled()) {
+      captionInput.setAttribute('readonly', true);
+    } else {
+      captionInput.setAttribute('placeholder', 'Write a caption');
+    }
+    imageWrapper.setAttribute('contenteditable', 'false');
+    imageWrapper.appendChild(captionInput);
+
+    const dropHelperTop = document.createElement('div');
+    dropHelperTop.classList.add('image-drop-helper', 'image-drop-helper-horizontal', 'top');
+    dropHelperTop.addEventListener('dragenter', () => {
+      guideline.style.display = 'none';
+      dropHelperTop.style.borderTop = '1px solid #7552f6';
+    });
+
     const dropHelperLeft = document.createElement('div');
-    dropHelperLeft.classList.add('image-drop-helper', 'left');
+    dropHelperLeft.classList.add('image-drop-helper', 'image-drop-helper-vertical', 'left');
     dropHelperLeft.addEventListener('dragenter', () => {
       const width = Number(node.getAttribute('width'));
       const height = width / Number(node.getAttribute('ratio'));
-      const position = getGuidelinePosition(true, width);
+      const position = getVerticalBarPosition(true, width);
       guideline.style.display = 'block';
       guideline.style.height = `${height}px`;
       guideline.style.left = position;
     });
 
     const dropHelperRight = document.createElement('div');
-    dropHelperRight.classList.add('image-drop-helper', 'right');
+    dropHelperRight.classList.add('image-drop-helper', 'image-drop-helper-vertical', 'right');
     dropHelperRight.addEventListener('dragenter', () => {
       const width = Number(node.getAttribute('width'));
       const height = width / Number(node.getAttribute('ratio'));
-      const position = getGuidelinePosition(false, width);
+      const position = getVerticalBarPosition(false, width);
       guideline.style.display = 'block';
       guideline.style.height = `${height}px`;
       guideline.style.left = position;
     });
 
+    node.appendChild(dropHelperTop);
     node.appendChild(dropHelperLeft);
     node.appendChild(dropHelperRight);
     node.appendChild(imageWrapper);
@@ -133,8 +157,11 @@ class AdditorImage extends EmbedBlot {
 
       dropHelperLeft.style.display = 'none';
       dropHelperRight.style.display = 'none';
+      dropHelperTop.style.display = 'none';
+      dropHelperTop.style.borderTop = 'none';
       guideline.style.display = 'none';
     });
+
     return node;
   }
 
@@ -289,10 +316,12 @@ class AdditorImage extends EmbedBlot {
 
     const cursor = this.domNode.querySelector('.cursor');
     const { width, height } = this.getImageRect();
-    // TODO: 이미지 width 최대일때 cursor left position 이상하게 잡힘 확인
     const alignStyle = this.getImageAlignedStatus();
     cursor.style.left = this.getVerticalBarPosition(alignStyle, isLeft, width);
     cursor.style.display = 'block';
+    setTimeout(() => {
+      cursor.style.animation = 'blinker 1s step-end infinite';
+    }, 200);
     cursor.style.height = `${height}px`;
     setTimeout(() => {
       this.scroll.domNode.blur();
@@ -308,17 +337,29 @@ class AdditorImage extends EmbedBlot {
 
   hideFakeCursor() {
     const cursor = this.domNode.querySelector('.cursor');
+    cursor.style.animation = 'none';
     cursor.style.display = 'none';
     this.scroll.emitter.emit(Emitter.events.IMAGE_FOCUS, undefined);
   }
 
-  showDropHelper() {
-    const dropHelpers = this.domNode.querySelectorAll('.image-drop-helper');
+  showDropHelper(disableVerticalGuideline) {
+    const dropHelpers = this.domNode.querySelectorAll('.image-drop-helper-vertical');
+    const dropHelperTop = this.domNode.querySelector('.image-drop-helper-horizontal');
     const { height } = this.getImageRect();
-    dropHelpers.forEach(dropHelper => {
-      dropHelper.style.height = `${height}px`;
-      dropHelper.style.display = 'block';
-    });
+
+    if (disableVerticalGuideline) {
+      dropHelpers.forEach(dropHelper => {
+        dropHelper.style.display = 'none';
+      });
+      dropHelperTop.style.height = `${height}px`;
+      dropHelperTop.style.display = 'block';
+    } else {
+      dropHelpers.forEach(dropHelper => {
+        dropHelper.style.height = `${height}px`;
+        dropHelper.style.display = 'block';
+      });
+      dropHelperTop.style.display = 'block';
+    }
   }
 
   hideDropHelper() {

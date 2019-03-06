@@ -401,6 +401,7 @@ class ImageGrid extends Module {
         },
       });
     this.quill.updateContents(imageGridDelta, 'user');
+    this.forceComponentUpdateAfterTransition();
   }
 
   splitImageGrid(splitCursorIndex) {
@@ -427,6 +428,7 @@ class ImageGrid extends Module {
       .delete(1);
     this.quill.updateContents(updateDelta, 'user');
     this.quill.setSelection(originImageGridIndex + 1, 0, Quill.sources.USER);
+    this.forceComponentUpdateAfterTransition();
   }
 
   insertImageToImageGrid(targetBlot, newImageBlot, dropIndex) {
@@ -473,6 +475,7 @@ class ImageGrid extends Module {
         newImageBlot.remove();
       },
     );
+    this.forceComponentUpdateAfterTransition();
   }
 
   changeImageSquence(targetBlot, originItemIndex, dropIndex) {
@@ -639,6 +642,12 @@ class ImageGrid extends Module {
     this.quill.on(Quill.events.IMAGE_GRID_FOCUS, data => {
       this.imageGridFocusData = data;
     });
+  }
+
+  forceComponentUpdateAfterTransition() {
+    setTimeout(() => {
+      this.quill.component.forceUpdate();
+    }, 300);
   }
 }
 
