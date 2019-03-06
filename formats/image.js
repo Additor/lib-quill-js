@@ -81,8 +81,8 @@ class AdditorImage extends EmbedBlot {
     });
     imageWrapper.appendChild(image);
 
-    const captionInput = document.createElement('INPUT');
-    captionInput.setAttribute('maxlength', '40');
+    const captionInput = document.createElement('SPAN');
+    captionInput.setAttribute('contenteditable', 'true');
     captionInput.addEventListener('mousedown', ev => {
       ev.stopPropagation();
     });
@@ -97,7 +97,6 @@ class AdditorImage extends EmbedBlot {
         ev.stopPropagation();
       }
     });
-    captionInput.setAttribute('type', 'text');
     captionInput.setAttribute('spellcheck', 'false');
     captionInput.classList.add('caption');
     if (isDisabled()) {
@@ -212,10 +211,10 @@ class AdditorImage extends EmbedBlot {
   format(name, value) {
     if (ImageFormatAttributesList.indexOf(name) > -1) {
       if (name === 'caption') {
-        const captionInput = this.domNode.getElementsByTagName('INPUT')[0];
+        const captionInput = this.domNode.querySelector('.caption');
         const imageNode = this.domNode.getElementsByTagName('IMG')[0];
         if (captionInput) {
-          captionInput.setAttribute('value', value);
+          captionInput.innerText = value;
           imageNode.setAttribute('caption', value);
         }
       }

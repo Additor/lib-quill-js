@@ -112,9 +112,8 @@ class ImageGrid extends BlockEmbed {
       imageElement.setAttribute('src', this.sanitize(imageSrc));
       imageElement.setAttribute('caption', caption);
 
-      const captionElement = document.createElement('input');
-      captionElement.setAttribute('type', 'text');
-      captionElement.setAttribute('maxlength', '40');
+      const captionElement = document.createElement('SPAN');
+      captionElement.setAttribute('contenteditable', 'true');
       captionElement.setAttribute('spellcheck', 'false');
       captionElement.classList.add('caption');
       if (isDisabled()) {
@@ -122,7 +121,7 @@ class ImageGrid extends BlockEmbed {
       } else {
         captionElement.setAttribute('placeholder', 'Write a caption');
       }
-      captionElement.value = caption;
+      captionElement.innerText = caption;
       captionElement.addEventListener('click', ev => {
         ev.stopPropagation();
       });
@@ -261,9 +260,8 @@ class ImageGrid extends BlockEmbed {
       imageElement.setAttribute('src', this.sanitize(imageSrc));
       imageElement.setAttribute('caption', caption);
 
-      const captionElement = document.createElement('input');
-      captionElement.setAttribute('type', 'text');
-      captionElement.setAttribute('maxlength', '40');
+      const captionElement = document.createElement('SPAN');
+      captionElement.setAttribute('contenteditable', 'true');
       captionElement.setAttribute('spellcheck', 'false');
       captionElement.classList.add('caption');
       if (isDisabled()) {
@@ -271,7 +269,7 @@ class ImageGrid extends BlockEmbed {
       } else {
         captionElement.setAttribute('placeholder', 'Write a caption');
       }
-      captionElement.value = caption;
+      captionElement.innerText = caption;
       captionElement.addEventListener('click', ev => {
         ev.stopPropagation();
       });
@@ -280,6 +278,7 @@ class ImageGrid extends BlockEmbed {
         if (ev.keyCode === 13 || ev.keyCode === 9 || ev.keyCode === 27) {
           ev.preventDefault();
         } else {
+          // ctrl, cmd, shift, alt, metaKey, backspace, delete 아닌경우, 40자 이상이면 ev.preventDefault();
           ev.stopPropagation();
         }
       });
