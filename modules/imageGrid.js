@@ -95,7 +95,12 @@ class ImageGrid extends Module {
           const delta = new Delta().retain(imageGridIndex).insert('\n');
           this.quill.updateContents(delta, 'user');
         } else {
-          this.splitImageGrid(cursorOffset);
+          this.quill.setSelection(imageGridIndex + 1, 'user');
+
+          // FIXME: 이미지그리드를 분리 시킬 경우, 알수없는 <p></p> 태그가 생성되어 retain 이 어그러져서 데이터가 망가지는 버그가 발생함
+          // 이미지를 블록단위로 처리하면 이러한 현상이 발생하지 않으므로 그 이후에 분리되는 UX 가 가능하도록 처리할 수 있을듯
+          // 이미지 블록단위는 ver1.0 적용하면서 함께 마이그레이션을 포함하여 업데이트 진행 예상
+          // this.splitImageGrid(cursorOffset);
         }
         prevented = true;
         break;
@@ -423,9 +428,18 @@ class ImageGrid extends Module {
 
     const updateDelta = new Delta()
       .retain(originImageGridIndex)
-      .insert(...nextLeftOps)
-      .insert(...nextRightOps)
       .delete(1);
+
+    updateDelta.insert(...nextLeftOps);
+    if (nextLeftOps.length === 2) {
+      updateDelta.insert('\n');
+    }
+
+    updateDelta.insert(...nextRightOps);
+    if (nextRightOps.length === 2) {
+      updateDelta.insert('\n');
+    }
+
     this.quill.updateContents(updateDelta, 'user');
     this.quill.setSelection(originImageGridIndex + 1, 0, Quill.sources.USER);
     this.forceComponentUpdateAfterTransition();

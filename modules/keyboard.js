@@ -736,6 +736,7 @@ function handleDeleteRange(range) {
 
 // TODO use just updateContents()
 function handleEnter(range, context) {
+  console.log('handleEnter');
   if (range.length > 0) {
     this.quill.scroll.deleteAt(range.index, range.length); // So we do not trigger text-change
   }
