@@ -19,14 +19,6 @@ class ImageGrid extends BlockEmbed {
     const { data } = value;
     node.setAttribute('image-grid-data', JSON.stringify(data));
 
-    const cursor = document.createElement('div');
-    cursor.classList.add('vertical-bar', 'cursor');
-    node.appendChild(cursor);
-
-    const guideline = document.createElement('div');
-    guideline.classList.add('vertical-bar', 'guideline');
-    node.appendChild(guideline);
-
     const dropHelperWrapper = document.createElement('div');
     dropHelperWrapper.classList.add('image-grid-drop-helper-wrapper');
 
@@ -98,6 +90,14 @@ class ImageGrid extends BlockEmbed {
     const imageGridItemWrapper = document.createElement('div');
     imageGridItemWrapper.classList.add('image-grid-item-wrapper');
 
+    const cursor = document.createElement('div');
+    cursor.classList.add('vertical-bar', 'cursor');
+    imageGridItemWrapper.appendChild(cursor);
+
+    const guideline = document.createElement('div');
+    guideline.classList.add('vertical-bar', 'guideline');
+    imageGridItemWrapper.appendChild(guideline);
+
     const sumOfRatios = data.reduce((accumulator, { attributes: { ratio } }) => accumulator + Number(ratio), 0);
 
     data.forEach((eachImageData, index) => {
@@ -148,9 +148,9 @@ class ImageGrid extends BlockEmbed {
 
       imageGridItemWrapper.appendChild(imaegGridItemContainer);
     });
-
-    imageGridItemWrapper.firstElementChild.classList.add('left');
-    imageGridItemWrapper.lastElementChild.classList.add('right');
+    const imageGridItems = imageGridItemWrapper.querySelectorAll('.image-grid-item-container');
+    imageGridItems[0].classList.add('left');
+    imageGridItems[imageGridItems.length - 1].classList.add('right');
     imageGridItemWrapper.setAttribute('contenteditable', 'false');
     node.appendChild(imageGridItemWrapper);
 
@@ -218,7 +218,7 @@ class ImageGrid extends BlockEmbed {
     if (format === 'created-data') {
       const { index: newImageIndex, animation } = value;
       const imageGridItemWrapper = this.domNode.querySelector('.image-grid-item-wrapper');
-      const animationTarget = imageGridItemWrapper.querySelector(`.image-grid-item-container:nth-of-type(${newImageIndex + 1})`)
+      const animationTarget = imageGridItemWrapper.querySelectorAll(`.image-grid-item-container`)[newImageIndex];
       animationTarget.addEventListener('animationend', () => {
         animationTarget.classList.remove(animation);
       });
@@ -304,7 +304,7 @@ class ImageGrid extends BlockEmbed {
         .querySelector('.image-grid-item-wrapper')
         .insertBefore(
           imaegGridItemContainer,
-          imageGridItemWrapper.querySelector(`.image-grid-item-container:nth-of-type(${dropIndex + 1})`),
+          imageGridItemWrapper.querySelectorAll(`.image-grid-item-container`)[dropIndex],
         );
 
       // adjust width
@@ -316,8 +316,9 @@ class ImageGrid extends BlockEmbed {
           eachImage.setAttribute('item-index', i);
           eachImage.classList.remove('left', 'right');
         });
-      imageGridItemWrapper.firstElementChild.classList.add('left');
-      imageGridItemWrapper.lastElementChild.classList.add('right');
+      const imageGridItems = imageGridItemWrapper.querySelectorAll('.image-grid-item-container');
+      imageGridItems[0].classList.add('left');
+      imageGridItems[imageGridItems.length - 1].classList.add('right');
       this.domNode.setAttribute('image-grid-data', JSON.stringify(nextData));
       return;
     } else if (format === 'remove-data') {
@@ -325,7 +326,7 @@ class ImageGrid extends BlockEmbed {
       const sumOfRatios = nextData.reduce((accumulator, { attributes: { ratio } }) => accumulator + Number(ratio), 0);
 
       const imageGridItemWrapper = this.domNode.querySelector('.image-grid-item-wrapper');
-      imageGridItemWrapper.querySelector(`.image-grid-item-container:nth-of-type(${removeIndex + 1})`).remove();
+      imageGridItemWrapper.querySelectorAll(`.image-grid-item-container`)[removeIndex].remove();
       imageGridItemWrapper
         .querySelectorAll('.image-grid-item-container')
         .forEach((eachImage, i) => {
