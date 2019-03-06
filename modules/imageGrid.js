@@ -237,6 +237,7 @@ class ImageGrid extends Module {
         ratio,
         width,
         style,
+        'create-animation': 'fade-in-and-scale-up',
       },
     );
     this.quill.updateContents(copiedImageDelta, 'user');
@@ -290,6 +291,9 @@ class ImageGrid extends Module {
         images = [originBlot, targetImageBlot];
       } else if (dropHelperIndex === 1) {
         images = [targetImageBlot, originBlot];
+      } else {
+        console.error('dropHelperIndex error: ', dropHelperIndex);
+        return;
       }
       imageGridData = images.map(image => {
         const imageNode = image.domNode.querySelector('IMG');
@@ -336,14 +340,27 @@ class ImageGrid extends Module {
         this.insertImageToPrevLine(removedItem, targetImageBlot);
 
         const originBlotIndex = this.quill.getIndex(originBlot);
-        const nextOriginOps = this.makeOperations(nextOriginData);
-        const originImageDeleteDelta = new Delta()
-          .retain(originBlotIndex)
-          .delete(1)
-          .insert(...nextOriginOps);
-        this.quill.updateContents(originImageDeleteDelta, 'user');
-        this.quill.setSelection(null);
-
+        if (nextOriginData.length === 1) {
+          // image-grid -> image blot 변경됨
+          const nextOriginOps = this.makeOperations(nextOriginData);
+          const originImageDeleteDelta = new Delta()
+            .retain(originBlotIndex)
+            .delete(1)
+            .insert(...nextOriginOps);
+          this.quill.updateContents(originImageDeleteDelta, 'user');
+          this.quill.setSelection(null);
+        } else {
+          this.quill.formatText(
+            originBlotIndex,
+            1,
+            'remove-data',
+            {
+              index: originIndexInBlot,
+              data: nextOriginData,
+            },
+            'user',
+          );
+        }
         return;
       } else if (dropHelperIndex === 0) {
         imageGridData = [removedItem, targetImageData];
@@ -352,20 +369,37 @@ class ImageGrid extends Module {
       }
 
       const originBlotIndex = this.quill.getIndex(originBlot);
-      const nextOriginOps = this.makeOperations(nextOriginData);
-      const originGridUpdatedDelta = new Delta()
-        .retain(originBlotIndex)
-        .delete(1)
-        .insert(...nextOriginOps);
-
-      this.quill.updateContents(originGridUpdatedDelta, 'user');
+      if (nextOriginData.length === 1) {
+        const nextOriginOps = this.makeOperations(nextOriginData);
+        const originGridUpdatedDelta = new Delta()
+          .retain(originBlotIndex)
+          .delete(1)
+          .insert(...nextOriginOps);
+        this.quill.updateContents(originGridUpdatedDelta, 'user');
+      } else {
+        this.quill.formatText(
+          originBlotIndex,
+          1,
+          'remove-data',
+          {
+            index: originIndexInBlot,
+            data: nextOriginData,
+          },
+          'user',
+        );
+      }
     }
     const targetImageIndex = this.quill.getIndex(targetImageBlot);
     const newImageGridOps = this.makeOperations(imageGridData);
     const imageGridDelta = new Delta()
       .retain(targetImageIndex)
       .delete(1)
-      .insert(...newImageGridOps);
+      .insert(...newImageGridOps, {
+        'created-data': {
+          index: dropHelperIndex,
+          animation: 'fade-in-and-scale-up',
+        },
+      });
     this.quill.updateContents(imageGridDelta, 'user');
     this.forceComponentUpdateAfterTransition();
   }
@@ -421,13 +455,17 @@ class ImageGrid extends Module {
     nextTargetData.splice(dropIndex, 0, newImageData);
 
     const targetBlotIndex = this.quill.getIndex(targetBlot);
-    const nextTargetOps = this.makeOperations(nextTargetData);
-    const updateDelta = new Delta()
-      .retain(targetBlotIndex)
-      .insert(...nextTargetOps);
-    this.quill.updateContents(updateDelta, 'user');
-    targetBlot.remove();
 
+    this.quill.formatText(
+      targetBlotIndex,
+      1,
+      'add-data',
+      {
+        index: dropIndex,
+        data: nextTargetData,
+      },
+      'user',
+    );
     this.shrink(
       newImageBlot.domNode.querySelector('img'),
       () => {
@@ -513,13 +551,26 @@ class ImageGrid extends Module {
     const nextOriginData = [...prevOriginData];
     const [removedItem] = nextOriginData.splice(originIndexInBlot, 1);
 
-    const targetBlotIndex = this.quill.getIndex(originBlot);
-    const nextOriginOps = this.makeOperations(nextOriginData);
-    const updateDelta = new Delta()
-      .retain(targetBlotIndex)
-      .insert(...nextOriginOps);
-    this.quill.updateContents(updateDelta, 'user');
-    originBlot.remove();
+    const originBlotIndex = this.quill.getIndex(originBlot);
+    if (nextOriginData.length === 1) {
+      const nextOriginOps = this.makeOperations(nextOriginData);
+      const updateDelta = new Delta()
+        .retain(originBlotIndex)
+        .insert(...nextOriginOps);
+      this.quill.updateContents(updateDelta, 'user');
+      originBlot.remove();
+    } else {
+      this.quill.formatText(
+        originBlotIndex,
+        1,
+        'remove-data',
+        {
+          index: originIndexInBlot,
+          data: nextOriginData,
+        },
+        'user',
+      );
+    }
 
     if (removedItem && targetBlot) {
       const targetIndex = this.quill.getIndex(targetBlot);
@@ -533,16 +584,23 @@ class ImageGrid extends Module {
         const prevTargetData = this.getDataFromImageGridBlot(targetBlot);
         const nextTargetData = [...prevTargetData];
         nextTargetData.splice(targetIndexInBlot, 0, removedItem);
-        const nextTargetOps = this.makeOperations(nextTargetData);
-        const gridUpdateDelta = new Delta()
-          .retain(targetIndex)
-          .insert(...nextTargetOps);
-        this.quill.updateContents(gridUpdateDelta, 'user');
-        targetBlot.remove();
+
+        this.quill.formatText(
+          targetIndex,
+          1,
+          'add-data',
+          {
+            index: targetIndexInBlot,
+            data: nextTargetData,
+          },
+          'user',
+        );
       } else {
+        const newAttributes = _.cloneDeep(attributes);
+        newAttributes['create-animation'] = 'fade-in-and-scale-up';
         const imageInsertDelta = new Delta()
           .retain(targetIndex)
-          .insert({ image }, attributes);
+          .insert({ image }, newAttributes);
         this.quill.updateContents(imageInsertDelta, 'user');
       }
     }
@@ -556,7 +614,6 @@ class ImageGrid extends Module {
   handleDrop(originBlotInfo, targetBlotInfo) {
     const { originBlot = null, originIndexInGrid = null } = originBlotInfo;
     const { targetBlot = null, targetIndexInGrid = null } = targetBlotInfo;
-
     if (targetBlot.statics.blotName === 'image-grid') {
       if (originBlot.statics.blotName === 'image-grid') {
         if (targetBlot === originBlot) {

@@ -12,6 +12,7 @@ const ImageFormatAttributesList = [
   'caption',
   'ratio', // width / height
   'inline-comment',
+  'create-animation',
 ];
 
 function isDisabled() {
@@ -77,10 +78,6 @@ class AdditorImage extends BlockEmbed {
     if (typeof value === 'string') {
       image.setAttribute('src', this.sanitize(value));
     }
-    image.classList.add('fade-in-and-scale-up');
-    image.addEventListener('animationend', () => {
-      image.classList.remove('fade-in-and-scale-up');
-    });
     imageWrapper.appendChild(image);
 
     const captionInput = document.createElement('INPUT');
@@ -220,6 +217,15 @@ class AdditorImage extends BlockEmbed {
 
   format(name, value) {
     if (ImageFormatAttributesList.indexOf(name) > -1) {
+      if (name === 'create-animation') {
+        const image = this.domNode.querySelector('img');
+        image.classList.add(value);
+        image.addEventListener('animationend', () => {
+          image.classList.remove(value);
+        });
+        return;
+      }
+
       if (name === 'caption') {
         const captionInput = this.domNode.getElementsByTagName('INPUT')[0];
         const imageNode = this.domNode.getElementsByTagName('IMG')[0];
