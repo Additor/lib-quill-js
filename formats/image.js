@@ -364,6 +364,12 @@ class AdditorImage extends EmbedBlot {
   }
 
   showDropHelper(disableVerticalGuideline) {
+    if (
+      this.domNode.style.float === 'left' ||
+      this.domNode.style.float === 'right'
+    ) {
+      return;
+    }
     const dropHelpers = this.domNode.querySelectorAll('.image-drop-helper-vertical');
     const dropHelperTop = this.domNode.querySelector('.image-drop-helper-horizontal');
     const { height } = this.getImageRect();
