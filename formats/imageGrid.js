@@ -133,6 +133,16 @@ class ImageGrid extends BlockEmbed {
           ev.stopPropagation();
         }
       });
+      captionElement.addEventListener('copy', ev => {
+        ev.stopPropagation();
+      });
+      captionElement.addEventListener('paste', ev => {
+        ev.preventDefault();
+        ev.stopPropagation();
+
+        const text = ev.clipboardData.getData('text/plain');
+        document.execCommand('insertHTML', false, text);
+      });
 
       imaegGridItemContainer.style.width = `${(Number(ratio) * 100) / sumOfRatios}%`;
       imaegGridItemContainer.classList.add('image-grid-item-container', 'ql-img');
@@ -387,6 +397,7 @@ class ImageGrid extends BlockEmbed {
     const cursor = this.domNode.querySelector('.cursor');
     cursor.style.display = 'none';
     cursor.style.animation = 'none';
+    this.scroll.emitter.emit(Emitter.events.IMAGE_FOCUS, undefined);
     this.scroll.emitter.emit(Emitter.events.IMAGE_GRID_FOCUS, undefined);
   }
 

@@ -94,6 +94,18 @@ class AdditorImage extends EmbedBlot {
         ev.stopPropagation();
       }
     });
+
+    captionInput.addEventListener('copy', ev => {
+      ev.stopPropagation();
+    });
+    captionInput.addEventListener('paste', ev => {
+      ev.preventDefault();
+      ev.stopPropagation();
+
+      const text = ev.clipboardData.getData('text/plain');
+      document.execCommand('insertHTML', false, text);
+    });
+
     captionInput.setAttribute('spellcheck', 'false');
     captionInput.classList.add('caption');
     if (isDisabled()) {
@@ -361,6 +373,7 @@ class AdditorImage extends EmbedBlot {
     cursor.style.animation = 'none';
     cursor.style.display = 'none';
     this.scroll.emitter.emit(Emitter.events.IMAGE_FOCUS, undefined);
+    this.scroll.emitter.emit(Emitter.events.IMAGE_GRID_FOCUS, undefined);
   }
 
   showDropHelper(disableVerticalGuideline) {

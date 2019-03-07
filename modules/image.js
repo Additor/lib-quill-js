@@ -1,13 +1,13 @@
 import Delta from 'quill-delta';
 import Quill from '../core/quill';
 import Module from '../core/module';
-import image from '../formats/image';
+import AdditorImage from '../formats/image';
 
 const SHORT_KEY = /Mac/i.test(navigator.platform) ? 'metaKey' : 'ctrlKey';
 
 class Image extends Module {
   static register() {
-    Quill.register(image);
+    Quill.register(AdditorImage);
   }
 
   constructor(...args) {
@@ -42,8 +42,26 @@ class Image extends Module {
       case 37: // arrow left
         if (cursorOffset === 0) {
           if (imageIndex > 0) {
-            this.quill.setSelection(imageIndex - 1, 0, Quill.sources.USER);
+            const [beforeLine] = this.quill.getLine(imageIndex - 1);
+            if (beforeLine) {
+              blot.hideFakeCursor();
+              if (beforeLine.statics.blotName === 'image-grid') {
+                beforeLine.showFakeCursor(-1);
+              } else {
+                const [imageBlot] = beforeLine.descendant(AdditorImage);
+                if (imageBlot) {
+                  imageBlot.showFakeCursor(false);
+                } else {
+                  this.quill.setSelection(
+                    imageIndex - 1,
+                    0,
+                    Quill.sources.USER,
+                  );
+                }
+              }
+            }
           }
+
         } else {
           blot.showFakeCursor();
         }
@@ -63,7 +81,8 @@ class Image extends Module {
       case 39: // arrow right
         if (cursorOffset === 0) {
           blot.showFakeCursor(false);
-        } else if (imageLastIndex < quillLength) {
+        } else if (imageLastIndex < quillLength - 1) {
+          blot.hideFakeCursor();
           this.quill.setSelection(imageLastIndex, 0, Quill.sources.USER);
         }
         prevented = true;
@@ -74,7 +93,11 @@ class Image extends Module {
             this.quill.setSelection(imageLastIndex, 0, Quill.sources.USER);
           } else {
             const [nextLine] = this.quill.getLine(imageLastIndex);
-            this.quill.setSelection(imageLastIndex + nextLine.length() - 1, 0, Quill.sources.USER);
+            this.quill.setSelection(
+              imageLastIndex + nextLine.length() - 1,
+              0,
+              Quill.sources.USER,
+            );
           }
         }
         prevented = true;
@@ -83,6 +106,7 @@ class Image extends Module {
         if (cursorOffset === 0) {
           const delta = new Delta().retain(imageIndex).insert('\n');
           this.quill.updateContents(delta, 'user');
+          this.quill.component.forceUpdate();
         } else {
           const delta = new Delta().retain(imageLastIndex).insert('\n');
           this.quill.updateContents(delta, 'user');
@@ -99,6 +123,7 @@ class Image extends Module {
             } else {
               this.quill.setSelection(imageIndex - 1, 0, Quill.sources.USER);
             }
+            this.quill.component.forceUpdate();
           }
         } else {
           blot.remove();
@@ -149,12 +174,31 @@ class Image extends Module {
       default:
         if (ev.key.length === 1) {
           if (cursorOffset === 0) {
-            if (imageIndex === 0) {
-              this.quill.updateContents([{ insert: '\n' }]);
+            const [beforeLine] = this.quill.getLine(imageIndex - 1);
+            const needNewLine = !!(
+              (imageIndex === 0) ||
+              (beforeLine && beforeLine.statics.blotName === 'image-grid') ||
+              (beforeLine && beforeLine.descendant && beforeLine.descendant(AdditorImage)[0])
+            );
+
+            if (needNewLine) {
+              this.quill.updateContents([
+                { retain: imageIndex },
+                { insert: '\n' },
+              ]);
+              this.quill.setSelection(imageIndex, 0, Quill.sources.USER);
+            } else {
+              this.quill.setSelection(imageIndex - 1, 0, Quill.sources.USER);
             }
-            this.quill.setSelection(imageIndex - 1, 0, Quill.sources.USER);
           } else {
-            if (imageIndex === quillLength - 1) {
+            const [nextLine] = this.quill.getLine(imageIndex + 1);
+            const needNewLine = !!(
+              (imageIndex === quillLength - 1) ||
+              (nextLine && nextLine.statics.blotName === 'image-grid') ||
+              (nextLine && nextLine.descendant && nextLine.descendant(AdditorImage)[0])
+            );
+
+            if (needNewLine) {
               this.quill.updateContents(
                 new Delta()
                   .retain(imageIndex + 1)
@@ -162,7 +206,7 @@ class Image extends Module {
                 Quill.sources.USER,
               );
             }
-            this.quill.setSelection(imageIndex + 1, 0, Quill.sources.USER);
+            this.quill.setSelection(imageIndex + 1, 0, Quill.sources.USER)
           }
         }
     }
