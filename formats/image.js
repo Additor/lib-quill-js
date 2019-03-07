@@ -32,6 +32,11 @@ class AdditorImage extends EmbedBlot {
     const imageWrapper = document.createElement('DIV');
     imageWrapper.classList.add('ql-img-wrapper');
 
+    const cursor = document.createElement('div');
+    cursor.classList.add('vertical-bar', 'cursor');
+    const guideline = document.createElement('div');
+    guideline.classList.add('vertical-bar', 'guideline');
+
     const dropHelperTop = document.createElement('div');
     dropHelperTop.classList.add('image-drop-helper', 'image-drop-helper-horizontal', 'top');
     dropHelperTop.addEventListener('dragenter', () => {
@@ -44,7 +49,8 @@ class AdditorImage extends EmbedBlot {
     dropHelperLeft.addEventListener('dragenter', () => {
       const width = Number(node.getAttribute('width'));
       const height = width / Number(node.getAttribute('ratio')) - 4;
-      const position = getVerticalBarPosition(true, width);
+      const alignStyle = AdditorImage.getImageAlignedStatus(node.getAttribute('style'));
+      const position = AdditorImage.getVerticalBarPosition(alignStyle, true, width);
       guideline.style.display = 'block';
       guideline.style.height = `${height}px`;
       guideline.style.left = position;
@@ -55,7 +61,8 @@ class AdditorImage extends EmbedBlot {
     dropHelperRight.addEventListener('dragenter', () => {
       const width = Number(node.getAttribute('width'));
       const height = width / Number(node.getAttribute('ratio'));
-      const position = getVerticalBarPosition(false, width);
+      const alignStyle = AdditorImage.getImageAlignedStatus(node.getAttribute('style'));
+      const position = AdditorImage.getVerticalBarPosition(alignStyle, false, width);
       guideline.style.display = 'block';
       guideline.style.height = `${height}px`;
       guideline.style.left = position;
@@ -64,43 +71,6 @@ class AdditorImage extends EmbedBlot {
     imageWrapper.appendChild(dropHelperTop);
     imageWrapper.appendChild(dropHelperLeft);
     imageWrapper.appendChild(dropHelperRight);
-
-    function getVerticalBarPosition(isGuidelineLeft, imageWidth) {
-      let cursorPosition = '';
-      let alignStyle = null;
-      const styles = node.getAttribute('style');
-      if (styles) {
-        styles
-          .split(';')
-          .map(style => style.trim())
-          .forEach(style => {
-            const [styleName, styleValue] = style.split(': ');
-            if (styleName === 'float') {
-              alignStyle = styleValue;
-              return false;
-            }
-            return true;
-          });
-      }
-
-      if (alignStyle === 'left') {
-        cursorPosition = isGuidelineLeft ? `-5px` : `${imageWidth - 2}px`;
-      } else if (alignStyle === 'right') {
-        cursorPosition = isGuidelineLeft
-          ? `calc(100% - ${imageWidth - 1}px)`
-          : `calc(100% + 4px)`;
-      } else {
-        cursorPosition = isGuidelineLeft
-          ? `calc(50% - ${imageWidth / 2 + 5}px)`
-          : `calc(50% + ${imageWidth / 2 + 4}px)`;
-      }
-      return cursorPosition;
-    }
-
-    const cursor = document.createElement('div');
-    cursor.classList.add('vertical-bar', 'cursor');
-    const guideline = document.createElement('div');
-    guideline.classList.add('vertical-bar', 'guideline');
 
     imageWrapper.appendChild(cursor);
     imageWrapper.appendChild(guideline);
@@ -219,9 +189,6 @@ class AdditorImage extends EmbedBlot {
   }
 
   format(name, value) {
-    if (name === 'image') {
-      console.log(name, value);
-    }
     if (ImageFormatAttributesList.indexOf(name) > -1) {
       if (name === 'create-animation') {
         const image = this.domNode.querySelector('img');
@@ -316,13 +283,13 @@ class AdditorImage extends EmbedBlot {
     return { width, height };
   }
 
-  getVerticalBarPosition(imageAlignStyle, isCursorLeft, imageWidth) {
+  static getVerticalBarPosition(imageAlignStyle, isCursorLeft, imageWidth) {
     let cursorPosition = '';
     if (imageAlignStyle === 'left') {
-      cursorPosition = isCursorLeft ? `-5px` : `${imageWidth - 2}px`;
+      cursorPosition = isCursorLeft ? `-5px` : `${imageWidth + 4}px`;
     } else if (imageAlignStyle === 'right') {
       cursorPosition = isCursorLeft
-        ? `calc(100% - ${imageWidth - 1}px)`
+        ? `calc(100% - ${imageWidth + 5}px)`
         : `calc(100% + 4px)`;
     } else {
       cursorPosition = isCursorLeft
@@ -332,12 +299,10 @@ class AdditorImage extends EmbedBlot {
     return cursorPosition;
   }
 
-  getImageAlignedStatus() {
-    const { style } = this.formats();
-
+  static getImageAlignedStatus(styles) {
     let alignStyle = '';
-    if (style) {
-      style.split(';').forEach(eachStyle => {
+    if (styles) {
+      styles.split(';').forEach(eachStyle => {
         const [styleName, styleValue] = eachStyle.trim().split(': ');
         if (styleName === 'float') {
           alignStyle = styleValue;
@@ -353,9 +318,10 @@ class AdditorImage extends EmbedBlot {
 
     const cursor = this.domNode.querySelector('.cursor');
     const { width, height } = this.getImageRect();
-    const alignStyle = this.getImageAlignedStatus();
-    cursor.style.left = this.getVerticalBarPosition(alignStyle, isLeft, width);
-    cursor.style.display = 'block';
+    const { style } = this.formats();
+    const alignStyle = AdditorImage.getImageAlignedStatus(style);
+    cursor.style.left = AdditorImage.getVerticalBarPosition(alignStyle, isLeft, width);
+    cursor.style.display = 'inline-block';
     setTimeout(() => {
       cursor.style.animation = 'blinker 1s step-end infinite';
     }, 200);
