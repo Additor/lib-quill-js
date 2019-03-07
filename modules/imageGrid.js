@@ -235,8 +235,13 @@ class ImageGrid extends Module {
       attributes: { caption, ratio, width, style },
     } = imageData;
 
+    this.quill.insertText(index, ' \n', 'user');
+    this.quill.removeFormat(index, 1, 'user');
+    this.quill.deleteText(index, 1, 'user');
+
     const copiedImageDelta = new Delta()
       .retain(index)
+      .delete(1)
       .insert(
         { image: imageSrc },
         {
@@ -612,10 +617,15 @@ class ImageGrid extends Module {
           'user',
         );
       } else {
+        this.quill.insertText(targetIndex, ' \n', 'user');
+        this.quill.removeFormat(targetIndex, 1, 'user');
+        this.quill.deleteText(targetIndex, 1, 'user');
+
         const newAttributes = _.cloneDeep(attributes);
         newAttributes['create-animation'] = 'fade-in-and-scale-up';
         const imageInsertDelta = new Delta()
           .retain(targetIndex)
+          .delete(1)
           .insert({ image }, newAttributes)
           .insert('\n');
         this.quill.updateContents(imageInsertDelta, 'user');
