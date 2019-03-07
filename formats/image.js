@@ -32,6 +32,39 @@ class AdditorImage extends EmbedBlot {
     const imageWrapper = document.createElement('DIV');
     imageWrapper.classList.add('ql-img-wrapper');
 
+    const dropHelperTop = document.createElement('div');
+    dropHelperTop.classList.add('image-drop-helper', 'image-drop-helper-horizontal', 'top');
+    dropHelperTop.addEventListener('dragenter', () => {
+      guideline.style.display = 'none';
+      dropHelperTop.style.borderTop = '1px solid #7552f6';
+    });
+
+    const dropHelperLeft = document.createElement('div');
+    dropHelperLeft.classList.add('image-drop-helper', 'image-drop-helper-vertical', 'left');
+    dropHelperLeft.addEventListener('dragenter', () => {
+      const width = Number(node.getAttribute('width'));
+      const height = width / Number(node.getAttribute('ratio')) - 4;
+      const position = getVerticalBarPosition(true, width);
+      guideline.style.display = 'block';
+      guideline.style.height = `${height}px`;
+      guideline.style.left = position;
+    });
+
+    const dropHelperRight = document.createElement('div');
+    dropHelperRight.classList.add('image-drop-helper', 'image-drop-helper-vertical', 'right');
+    dropHelperRight.addEventListener('dragenter', () => {
+      const width = Number(node.getAttribute('width'));
+      const height = width / Number(node.getAttribute('ratio'));
+      const position = getVerticalBarPosition(false, width);
+      guideline.style.display = 'block';
+      guideline.style.height = `${height}px`;
+      guideline.style.left = position;
+    });
+
+    imageWrapper.appendChild(dropHelperTop);
+    imageWrapper.appendChild(dropHelperLeft);
+    imageWrapper.appendChild(dropHelperRight);
+
     function getVerticalBarPosition(isGuidelineLeft, imageWidth) {
       let cursorPosition = '';
       let alignStyle = null;
@@ -116,38 +149,6 @@ class AdditorImage extends EmbedBlot {
     imageWrapper.setAttribute('contenteditable', 'false');
     imageWrapper.appendChild(captionInput);
 
-    const dropHelperTop = document.createElement('div');
-    dropHelperTop.classList.add('image-drop-helper', 'image-drop-helper-horizontal', 'top');
-    dropHelperTop.addEventListener('dragenter', () => {
-      guideline.style.display = 'none';
-      dropHelperTop.style.borderTop = '1px solid #7552f6';
-    });
-
-    const dropHelperLeft = document.createElement('div');
-    dropHelperLeft.classList.add('image-drop-helper', 'image-drop-helper-vertical', 'left');
-    dropHelperLeft.addEventListener('dragenter', () => {
-      const width = Number(node.getAttribute('width'));
-      const height = width / Number(node.getAttribute('ratio')) - 4;
-      const position = getVerticalBarPosition(true, width);
-      guideline.style.display = 'block';
-      guideline.style.height = `${height}px`;
-      guideline.style.left = position;
-    });
-
-    const dropHelperRight = document.createElement('div');
-    dropHelperRight.classList.add('image-drop-helper', 'image-drop-helper-vertical', 'right');
-    dropHelperRight.addEventListener('dragenter', () => {
-      const width = Number(node.getAttribute('width'));
-      const height = width / Number(node.getAttribute('ratio'));
-      const position = getVerticalBarPosition(false, width);
-      guideline.style.display = 'block';
-      guideline.style.height = `${height}px`;
-      guideline.style.left = position;
-    });
-
-    node.appendChild(dropHelperTop);
-    node.appendChild(dropHelperLeft);
-    node.appendChild(dropHelperRight);
     node.appendChild(imageWrapper);
 
     node.setAttribute('contenteditable', 'false');
@@ -218,6 +219,9 @@ class AdditorImage extends EmbedBlot {
   }
 
   format(name, value) {
+    if (name === 'image') {
+      console.log(name, value);
+    }
     if (ImageFormatAttributesList.indexOf(name) > -1) {
       if (name === 'create-animation') {
         const image = this.domNode.querySelector('img');

@@ -85,7 +85,6 @@ class ImageGrid extends BlockEmbed {
 
     dropHelperWrapper.appendChild(dropHelperTop);
     dropHelperWrapper.appendChild(dropHelperWrapperVertical);
-    node.appendChild(dropHelperWrapper);
 
     const imageGridItemWrapper = document.createElement('div');
     imageGridItemWrapper.classList.add('image-grid-item-wrapper');
@@ -97,6 +96,8 @@ class ImageGrid extends BlockEmbed {
     const guideline = document.createElement('div');
     guideline.classList.add('vertical-bar', 'guideline');
     imageGridItemWrapper.appendChild(guideline);
+
+    imageGridItemWrapper.appendChild(dropHelperWrapper);
 
     const sumOfRatios = data.reduce((accumulator, { attributes: { ratio } }) => accumulator + Number(ratio), 0);
 
