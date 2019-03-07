@@ -235,16 +235,19 @@ class ImageGrid extends Module {
       attributes: { caption, ratio, width, style },
     } = imageData;
 
-    const copiedImageDelta = new Delta().retain(index).insert(
-      { image: imageSrc },
-      {
-        caption,
-        ratio,
-        width,
-        style,
-        'create-animation': 'fade-in-and-scale-up',
-      },
-    );
+    const copiedImageDelta = new Delta()
+      .retain(index)
+      .insert(
+        { image: imageSrc },
+        {
+          caption,
+          ratio,
+          width,
+          style,
+          'create-animation': 'fade-in-and-scale-up',
+        },
+      )
+      .insert('\n');
     this.quill.updateContents(copiedImageDelta, 'user');
   }
 
@@ -286,7 +289,7 @@ class ImageGrid extends Module {
             const originBlotIndex = this.quill.getIndex(originBlot);
             const originImageDeleteDelta = new Delta()
               .retain(originBlotIndex)
-              .delete(1);
+              .delete(2);
             this.quill.updateContents(originImageDeleteDelta, 'user');
             this.quill.setSelection(null);
           },
@@ -328,7 +331,7 @@ class ImageGrid extends Module {
           const originBlotIndex = this.quill.getIndex(originBlot);
           const originImageDeleteDelta = new Delta()
             .retain(originBlotIndex)
-            .delete(1);
+            .delete(2);
           this.quill.updateContents(originImageDeleteDelta, 'user');
         },
       );
@@ -398,7 +401,7 @@ class ImageGrid extends Module {
     const newImageGridOps = this.makeOperations(imageGridData);
     const imageGridDelta = new Delta()
       .retain(targetImageIndex)
-      .delete(1)
+      .delete(2)
       .insert(...newImageGridOps, {
         'created-data': {
           index: dropHelperIndex,
@@ -426,9 +429,7 @@ class ImageGrid extends Module {
       return;
     }
 
-    const updateDelta = new Delta()
-      .retain(originImageGridIndex)
-      .delete(1);
+    const updateDelta = new Delta().retain(originImageGridIndex).delete(1);
 
     updateDelta.insert(...nextLeftOps);
     if (nextLeftOps.length === 2) {
@@ -566,11 +567,12 @@ class ImageGrid extends Module {
     const [removedItem] = nextOriginData.splice(originIndexInBlot, 1);
 
     const originBlotIndex = this.quill.getIndex(originBlot);
-    if (nextOriginData.length === 1) {
+    if (nextOriginData.length === 1) { // nextOriginData is image
       const nextOriginOps = this.makeOperations(nextOriginData);
       const updateDelta = new Delta()
         .retain(originBlotIndex)
-        .insert(...nextOriginOps);
+        .insert(...nextOriginOps)
+        .insert('\n');
       this.quill.updateContents(updateDelta, 'user');
       originBlot.remove();
     } else {
@@ -614,7 +616,8 @@ class ImageGrid extends Module {
         newAttributes['create-animation'] = 'fade-in-and-scale-up';
         const imageInsertDelta = new Delta()
           .retain(targetIndex)
-          .insert({ image }, newAttributes);
+          .insert({ image }, newAttributes)
+          .insert('\n');
         this.quill.updateContents(imageInsertDelta, 'user');
       }
     }
