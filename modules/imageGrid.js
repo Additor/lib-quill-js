@@ -271,15 +271,12 @@ class ImageGrid extends Module {
       attributes: { caption, ratio, width, style },
     } = imageData;
 
-    this.quill.insertText(index, ' \n', 'user');
-    this.quill.removeFormat(index, 1, 'user');
-    this.quill.deleteText(index, 1, 'user');
-
     const copiedImageDelta = new Delta()
       .retain(index)
-      .delete(1)
       .insert(
-        { image: imageSrc },
+        {
+          image: imageSrc,
+        },
         {
           caption,
           ratio,
@@ -287,8 +284,7 @@ class ImageGrid extends Module {
           style,
           'create-animation': 'fade-in-and-scale-up',
         },
-      )
-      .insert('\n');
+      );
     this.quill.updateContents(copiedImageDelta, 'user');
   }
 
@@ -417,25 +413,27 @@ class ImageGrid extends Module {
         imageGridData = [targetImageData, removedItem];
       }
 
-      const originBlotIndex = this.quill.getIndex(originBlot);
-      if (nextOriginData.length === 1) {
-        const nextOriginOps = this.makeOperations(nextOriginData);
-        const originGridUpdatedDelta = new Delta()
-          .retain(originBlotIndex)
-          .delete(1)
-          .insert(...nextOriginOps);
-        this.quill.updateContents(originGridUpdatedDelta, 'user');
-      } else {
-        this.quill.formatText(
-          originBlotIndex,
-          1,
-          'remove-data',
-          {
-            index: originIndexInBlot,
-            data: nextOriginData,
-          },
-          'user',
-        );
+      if (originBlot.scroll === targetImageBlot.scroll) {
+        const originBlotIndex = this.quill.getIndex(originBlot);
+        if (nextOriginData.length === 1) {
+          const nextOriginOps = this.makeOperations(nextOriginData);
+          const originGridUpdatedDelta = new Delta()
+            .retain(originBlotIndex)
+            .delete(1)
+            .insert(...nextOriginOps);
+          this.quill.updateContents(originGridUpdatedDelta, 'user');
+        } else {
+          this.quill.formatText(
+            originBlotIndex,
+            1,
+            'remove-data',
+            {
+              index: originIndexInBlot,
+              data: nextOriginData,
+            },
+            'user',
+          );
+        }
       }
     }
     const targetImageIndex = this.quill.getIndex(targetImageBlot);
@@ -483,11 +481,17 @@ class ImageGrid extends Module {
     const prevTargetData = this.getDataFromImageGridBlot(targetBlot);
     const nextTargetData = [...prevTargetData];
 
-    const newImageData = {
-      image: newImageBlot.value().image,
-      attributes: newImageBlot.formats(),
-    };
-    if (dropIndex === -1) {
+    let newImageData;
+    if (newImageBlot instanceof AdditorImage) {
+      newImageData = {
+        image: newImageBlot.value().image,
+        attributes: newImageBlot.formats(),
+      };
+    } else {
+      newImageData = newImageBlot;
+    }
+
+    if (dropIndex === -1 && newImageBlot.domNode) {
       this.insertImageToPrevLine(newImageData, targetBlot);
       this.shrink(
         newImageBlot.domNode.querySelector('img'),
@@ -514,15 +518,18 @@ class ImageGrid extends Module {
       },
       'user',
     );
-    this.shrink(
-      newImageBlot.domNode.querySelector('img'),
-      () => {
-        newImageBlot.domNode.querySelector('.caption').style.display = 'none';
-      },
-      () => {
-        newImageBlot.remove();
-      },
-    );
+
+    if (newImageBlot.domNode) {
+      this.shrink(
+        newImageBlot.domNode.querySelector('img'),
+        () => {
+          newImageBlot.domNode.querySelector('.caption').style.display = 'none';
+        },
+        () => {
+          newImageBlot.remove();
+        },
+      );
+    }
     this.forceComponentUpdateAfterTransition();
   }
 
@@ -646,17 +653,11 @@ class ImageGrid extends Module {
           'user',
         );
       } else {
-        this.quill.insertText(targetIndex, ' \n', 'user');
-        this.quill.removeFormat(targetIndex, 1, 'user');
-        this.quill.deleteText(targetIndex, 1, 'user');
-
         const newAttributes = _.cloneDeep(attributes);
         newAttributes['create-animation'] = 'fade-in-and-scale-up';
         const imageInsertDelta = new Delta()
           .retain(targetIndex)
-          .delete(1)
-          .insert({ image }, newAttributes)
-          .insert('\n');
+          .insert({ image }, newAttributes);
         this.quill.updateContents(imageInsertDelta, 'user');
       }
     }

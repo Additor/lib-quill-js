@@ -35,38 +35,6 @@ class AdditorImage extends BlockEmbed {
     const imageWrapper = document.createElement('DIV');
     imageWrapper.classList.add('ql-img-wrapper');
 
-    function getVerticalBarPosition(isGuidelineLeft, imageWidth) {
-      let cursorPosition = '';
-      let alignStyle = null;
-      const styles = node.getAttribute('style');
-      if (styles) {
-        styles
-          .split(';')
-          .map(style => style.trim())
-          .forEach(style => {
-            const [styleName, styleValue] = style.split(': ');
-            if (styleName === 'float') {
-              alignStyle = styleValue;
-              return false;
-            }
-            return true;
-          });
-      }
-
-      if (alignStyle === 'left') {
-        cursorPosition = isGuidelineLeft ? `-2px` : `${imageWidth + 7}px`;
-      } else if (alignStyle === 'right') {
-        cursorPosition = isGuidelineLeft
-          ? `calc(100% - ${imageWidth + 8}px)`
-          : `calc(100% + 1px)`;
-      } else {
-        cursorPosition = isGuidelineLeft
-          ? `calc(50% - ${imageWidth / 2 + 5}px)`
-          : `calc(50% + ${imageWidth / 2 + 4}px)`;
-      }
-      return cursorPosition;
-    }
-
     const cursor = document.createElement('div');
     cursor.classList.add('vertical-bar', 'cursor');
     const guideline = document.createElement('div');
@@ -131,7 +99,8 @@ class AdditorImage extends BlockEmbed {
     dropHelperLeft.addEventListener('dragenter', () => {
       const width = Number(node.getAttribute('width'));
       const height = width / Number(node.getAttribute('ratio'));
-      const position = getVerticalBarPosition(true, width);
+      const alignStyle = AdditorImage.getImageAlignedStatus(node.getAttribute('style'));
+      const position = AdditorImage.getVerticalBarPosition(alignStyle, true, width);
       guideline.style.display = 'block';
       guideline.style.height = `${height}px`;
       guideline.style.left = position;
@@ -142,7 +111,8 @@ class AdditorImage extends BlockEmbed {
     dropHelperRight.addEventListener('dragenter', () => {
       const width = Number(node.getAttribute('width'));
       const height = width / Number(node.getAttribute('ratio'));
-      const position = getVerticalBarPosition(false, width);
+      const alignStyle = AdditorImage.getImageAlignedStatus(node.getAttribute('style'));
+      const position = AdditorImage.getVerticalBarPosition(alignStyle, false, width);
       guideline.style.display = 'block';
       guideline.style.height = `${height}px`;
       guideline.style.left = position;
@@ -340,7 +310,7 @@ class AdditorImage extends BlockEmbed {
     return { width, height };
   }
 
-  getVerticalBarPosition(imageAlignStyle, isCursorLeft, imageWidth) {
+  static getVerticalBarPosition(imageAlignStyle, isCursorLeft, imageWidth) {
     let cursorPosition = '';
     if (imageAlignStyle === 'left') {
       cursorPosition = isCursorLeft ? `-2px` : `${imageWidth + 7}px`;
@@ -356,12 +326,10 @@ class AdditorImage extends BlockEmbed {
     return cursorPosition;
   }
 
-  getImageAlignedStatus() {
-    const { style } = this.formats();
-
+  static getImageAlignedStatus(styles) {
     let alignStyle = '';
-    if (style) {
-      style.split(';').forEach(eachStyle => {
+    if (styles) {
+      styles.split(';').forEach(eachStyle => {
         const [styleName, styleValue] = eachStyle.trim().split(': ');
         if (styleName === 'float') {
           alignStyle = styleValue;
@@ -381,8 +349,8 @@ class AdditorImage extends BlockEmbed {
 
     const cursor = this.domNode.querySelector('.cursor');
     const { width, height } = this.getImageRect();
-    const alignStyle = this.getImageAlignedStatus();
-    cursor.style.left = this.getVerticalBarPosition(alignStyle, isLeft, width);
+    const alignStyle = AdditorImage.getImageAlignedStatus();
+    cursor.style.left = AdditorImage.getVerticalBarPosition(alignStyle, isLeft, width);
     cursor.style.display = 'block';
     setTimeout(() => {
       cursor.style.animation = 'blinker 1s step-end infinite';
@@ -409,6 +377,12 @@ class AdditorImage extends BlockEmbed {
   }
 
   showDropHelper(disableVerticalGuideline) {
+    if (
+      this.domNode.style.float === 'left' ||
+      this.domNode.style.float === 'right'
+    ) {
+      return;
+    }
     const dropHelpers = this.domNode.querySelectorAll('.image-drop-helper-vertical');
     const dropHelperTop = this.domNode.querySelector('.image-drop-helper-horizontal');
     const { height } = this.getImageRect();
