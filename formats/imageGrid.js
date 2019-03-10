@@ -1,6 +1,8 @@
 import { sanitize } from '../formats/link';
 import Emitter from '../core/emitter';
 import { BlockEmbed } from '../blots/block';
+import AdditorImage from './imageBlock';
+import _ from "lodash";
 
 const MAX_IMAGE_LENGTH = 3;
 
@@ -353,7 +355,12 @@ class ImageGrid extends BlockEmbed {
   }
 
   showFakeCursor(index = 0) {
-    this.hideFakeCursor();
+    const imageGrids = this.scroll.descendants(ImageGrid);
+    _.forEach(imageGrids, imageGrid => imageGrid.hideFakeCursor());
+
+    const images = this.scroll.descendants(AdditorImage);
+    _.forEach(images, imageGrid => imageGrid.hideFakeCursor());
+
     const cursor = this.domNode.querySelector('.cursor');
     const { height } = this.domNode.querySelector('.ql-img img').getBoundingClientRect();
     cursor.style.height = `${height}px`;

@@ -12,9 +12,6 @@ import AdditorImage from '../formats/image';
 
 const debug = logger('quill:keyboard');
 const SHORTKEY = /Mac/i.test(navigator.platform) ? 'metaKey' : 'ctrlKey';
-const isImageBlot = (blot) => {
-
-};
 
 class Keyboard extends Module {
   static match(evt, binding) {
@@ -521,9 +518,8 @@ Keyboard.DEFAULTS = {
             return false;
           }
 
-          const [imageBlot] = prevLine.descendant(AdditorImage);
-          if (imageBlot) {
-            imageBlot.showFakeCursor(false);
+          if (prevLine.statics.blotName === 'image') {
+            prevLine.showFakeCursor(false);
             return false;
           }
         }
@@ -561,9 +557,8 @@ Keyboard.DEFAULTS = {
             return false;
           }
 
-          const [imageBlot] = nextLine.descendant(AdditorImage);
-          if (imageBlot) {
-            imageBlot.showFakeCursor();
+          if (nextLine.statics.blotName === 'image') {
+            nextLine.showFakeCursor();
             return false;
           }
         }
@@ -591,9 +586,8 @@ Keyboard.DEFAULTS = {
             return false;
           }
 
-          const [imageBlot] = prev.descendant(AdditorImage);
-          if (imageBlot) {
-            imageBlot.showFakeCursor();
+          if (prev.statics.blotName === 'image') {
+            prev.showFakeCursor();
             return false;
           }
         }
@@ -610,9 +604,8 @@ Keyboard.DEFAULTS = {
             return false;
           }
 
-          const [imageBlot] = next.descendant(AdditorImage);
-          if (imageBlot) {
-            imageBlot.showFakeCursor();
+          if (next.statics.blotName === 'image') {
+            next.showFakeCursor();
             return false;
           }
         }
@@ -642,9 +635,8 @@ Keyboard.DEFAULTS = {
             return false;
           }
 
-          const [imageBlot] = prevLine.descendant(AdditorImage);
-          if (imageBlot) {
-            imageBlot.showFakeCursor(false);
+          if (prevLine.statics.blotName === 'image') {
+            prevLine.showFakeCursor(false);
             if (context.line.length() === 1) {
               context.line.remove();
             }
@@ -736,7 +728,6 @@ function handleDeleteRange(range) {
 
 // TODO use just updateContents()
 function handleEnter(range, context) {
-  console.log('handleEnter');
   if (range.length > 0) {
     this.quill.scroll.deleteAt(range.index, range.length); // So we do not trigger text-change
   }

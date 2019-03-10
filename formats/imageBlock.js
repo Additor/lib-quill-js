@@ -2,6 +2,7 @@ import _ from 'lodash';
 import { sanitize } from '../formats/link';
 import Emitter from '../core/emitter';
 import { BlockEmbed } from '../blots/block';
+import ImageGrid from './imageGrid';
 
 const ImageFormatAttributesList = [
   'alt',
@@ -80,8 +81,8 @@ class AdditorImage extends BlockEmbed {
     }
     imageWrapper.appendChild(image);
 
-    const captionInput = document.createElement('INPUT');
-    captionInput.setAttribute('maxlength', '40');
+    const captionInput = document.createElement('SPAN');
+    captionInput.setAttribute('contenteditable', 'true');
     captionInput.addEventListener('mousedown', ev => {
       ev.stopPropagation();
     });
@@ -96,7 +97,18 @@ class AdditorImage extends BlockEmbed {
         ev.stopPropagation();
       }
     });
-    captionInput.setAttribute('type', 'text');
+
+    captionInput.addEventListener('copy', ev => {
+      ev.stopPropagation();
+    });
+    captionInput.addEventListener('paste', ev => {
+      ev.preventDefault();
+      ev.stopPropagation();
+
+      const text = ev.clipboardData.getData('text/plain');
+      document.execCommand('insertHTML', false, text);
+    });
+
     captionInput.setAttribute('spellcheck', 'false');
     captionInput.classList.add('caption');
     if (isDisabled()) {
@@ -182,11 +194,15 @@ class AdditorImage extends BlockEmbed {
   }
 
   static value(domNode) {
-    return domNode.getElementsByTagName('IMG')[0].getAttribute('src');
+    const imageNode = domNode.getElementsByTagName('IMG')[0];
+    if (imageNode) {
+      return imageNode.getAttribute('src');
+    }
   }
 
   static formats(domNode) {
     const imageNode = domNode.getElementsByTagName('IMG')[0];
+    if (!imageNode) return {};
     return ImageFormatAttributesList.reduce((formats, attribute) => {
       if (attribute === 'caption') {
         formats[attribute] = imageNode.getAttribute(attribute) || '';
@@ -227,10 +243,10 @@ class AdditorImage extends BlockEmbed {
       }
 
       if (name === 'caption') {
-        const captionInput = this.domNode.getElementsByTagName('INPUT')[0];
+        const captionInput = this.domNode.querySelector('.caption');
         const imageNode = this.domNode.getElementsByTagName('IMG')[0];
         if (captionInput) {
-          captionInput.setAttribute('value', value);
+          captionInput.innerText = value;
           imageNode.setAttribute('caption', value);
         }
       }
@@ -357,7 +373,11 @@ class AdditorImage extends BlockEmbed {
   }
 
   showFakeCursor(isLeft = true) {
-    this.hideFakeCursor();
+    const imageGrids = this.scroll.descendants(ImageGrid);
+    _.forEach(imageGrids, imageGrid => imageGrid.hideFakeCursor());
+
+    const images = this.scroll.descendants(AdditorImage);
+    _.forEach(images, imageGrid => imageGrid.hideFakeCursor());
 
     const cursor = this.domNode.querySelector('.cursor');
     const { width, height } = this.getImageRect();
@@ -385,6 +405,7 @@ class AdditorImage extends BlockEmbed {
     cursor.style.animation = 'none';
     cursor.style.display = 'none';
     this.scroll.emitter.emit(Emitter.events.IMAGE_FOCUS, undefined);
+    this.scroll.emitter.emit(Emitter.events.IMAGE_GRID_FOCUS, undefined);
   }
 
   showDropHelper(disableVerticalGuideline) {

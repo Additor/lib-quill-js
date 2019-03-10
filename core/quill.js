@@ -429,7 +429,7 @@ class Quill {
         if (blotName === 'image-grid') {
           line.showFakeCursor(0);
           return;
-        } else if (line.firstChild && line.firstChild.blotName === 'image') {
+        } else if (blotName === 'image') {
           line.showFakeCursor();
           return;
         }
