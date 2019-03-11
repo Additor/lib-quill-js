@@ -398,6 +398,7 @@ class ImageGrid extends BlockEmbed {
         cursorOffset,
         maxCursorOffset,
       });
+      document.activeElement && document.activeElement.blur();
     });
   }
 

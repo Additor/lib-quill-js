@@ -15,6 +15,7 @@ import Module from '../core/module';
 import { AlignAttribute, AlignStyle } from '../formats/align';
 import { BackgroundStyle } from '../formats/background';
 import CodeBlock from '../formats/code';
+import AdditorImage from '../formats/imageBlock';
 import { ColorStyle } from '../formats/color';
 import { DirectionAttribute, DirectionStyle } from '../formats/direction';
 import { FontStyle } from '../formats/font';
@@ -124,6 +125,42 @@ class Clipboard extends Module {
         });
       });
     }
+
+    const imgNodes = doc.getElementsByTagName('IMG');
+    if (!_.isEmpty(imgNodes)) {
+      _.forEach(imgNodes, imgNode => {
+        if (!_.startsWith(imgNode.getAttribute('src'), 'data:')) {
+          const newImgNode = imgNode.cloneNode(true);
+          const parentDiv = document.createElement('DIV');
+          parentDiv.classList.add('ql-img');
+
+          newImgNode.setAttribute('style', '');
+
+          const imgWrapper = document.createElement('DIV');
+          imgWrapper.classList.add('ql-img-wrapper');
+
+          parentDiv.appendChild(imgWrapper);
+          imgWrapper.appendChild(newImgNode);
+
+          imgNode.parentNode.replaceChild(parentDiv, imgNode);
+        }
+      });
+    }
+
+    setTimeout(() => {
+      const imageBlots = this.quill.scroll.descendants(AdditorImage);
+      _.forEach(imageBlots, blot => {
+        if (!blot.domNode.getAttribute('ratio')) {
+          const { width, height } = blot.domNode.getElementsByTagName('img')[0];
+          const ratio = width / height;
+          const imageWidth =
+            width > this.quill.root.clientWidth ? this.quill.root.clientWidth : width;
+          const imageBlotIndex = this.quill.getIndex(blot);
+          this.quill.formatText(imageBlotIndex, 1, 'width', imageWidth, 'user');
+          this.quill.formatText(imageBlotIndex, 1, 'ratio', ratio, 'user');
+        }
+      });
+    });
 
     const domNodes = doc.body.getElementsByTagName('*');
     _.forEach(domNodes, domNode => {

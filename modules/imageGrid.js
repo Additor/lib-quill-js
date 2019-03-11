@@ -267,23 +267,22 @@ class ImageGrid extends Module {
 
   insertImageToPrevLine(imageData, targetBlot) {
     const index = this.quill.getIndex(targetBlot);
-
     const {
-      image: imageSrc,
-      attributes: { caption, ratio, width, style },
+      image,
+      attributes,
     } = imageData;
-
     const copiedImageDelta = new Delta()
       .retain(index)
       .insert(
         {
-          image: imageSrc,
+          image,
         },
         {
-          caption,
-          ratio,
-          width,
-          style,
+          caption: attributes.caption,
+          ratio: attributes.ratio,
+          width: attributes.width,
+          style: attributes.style,
+          'inline-comment': attributes['inline-comment'],
           'create-animation': 'fade-in-and-scale-up',
         },
       );
@@ -307,14 +306,12 @@ class ImageGrid extends Module {
     if (originBlot.statics.blotName === 'image') {
       let images = null;
       if (dropHelperIndex === -1) { // top: -1
-
-        const { caption, ratio, width, style } = originBlot.formats();
         const { image } = originBlot.value();
 
         this.insertImageToPrevLine(
           {
             image,
-            attributes: { caption, ratio, width, style },
+            attributes: originBlot.formats(),
           },
           targetImageBlot,
         );
@@ -481,6 +478,7 @@ class ImageGrid extends Module {
 
   insertImageToImageGrid(targetBlot, newImageBlot, dropIndex) {
     const prevTargetData = this.getDataFromImageGridBlot(targetBlot);
+    if (prevTargetData.length > 2) return;
     const nextTargetData = [...prevTargetData];
 
     let newImageData;

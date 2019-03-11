@@ -239,7 +239,7 @@ class AdditorImage extends BlockEmbed {
           if (name === 'width') {
             const { ratio } = this.formats();
             if (ratio) {
-              const dropHelpers = this.domNode.querySelectorAll('.image-drop-helper-vertical');
+              const dropHelpers = this.domNode.querySelectorAll('.image-drop-helper');
               const width = Number(value);
               const height = width / ratio;
               dropHelpers.forEach(dropHelper => {
@@ -257,7 +257,7 @@ class AdditorImage extends BlockEmbed {
           } else if (name === 'ratio') { // DomNode, event, listener를 받아서 처리하는 함수로 만들 수 있을 듯..
             const { width: imageWidth } = this.formats();
             if (imageWidth) {
-              const dropHelpers = this.domNode.querySelectorAll('.image-drop-helper-vertical');
+              const dropHelpers = this.domNode.querySelectorAll('.image-drop-helper');
               const width = Number(imageWidth);
               const height = width / value;
               dropHelpers.forEach(dropHelper => {
@@ -365,6 +365,7 @@ class AdditorImage extends BlockEmbed {
         blot: this,
         cursorOffset: isLeft ? 0 : 1,
       });
+      document.activeElement && document.activeElement.blur(); // caption input 에서 blur 시킴
     });
   }
 
