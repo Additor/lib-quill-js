@@ -2,7 +2,7 @@ import { sanitize } from '../formats/link';
 import Emitter from '../core/emitter';
 import { BlockEmbed } from '../blots/block';
 import AdditorImage from './imageBlock';
-import _ from "lodash";
+import _ from 'lodash';
 
 const MAX_IMAGE_LENGTH = 3;
 

@@ -313,11 +313,11 @@ class AdditorImage extends BlockEmbed {
   static getVerticalBarPosition(imageAlignStyle, isCursorLeft, imageWidth) {
     let cursorPosition = '';
     if (imageAlignStyle === 'left') {
-      cursorPosition = isCursorLeft ? `-2px` : `${imageWidth + 7}px`;
+      cursorPosition = isCursorLeft ? `-5px` : `${imageWidth + 4}px`;
     } else if (imageAlignStyle === 'right') {
       cursorPosition = isCursorLeft
-        ? `calc(100% - ${imageWidth + 8}px)`
-        : `calc(100% + 1px)`;
+        ? `calc(100% - ${imageWidth + 5}px)`
+        : `calc(100% + 4px)`;
     } else {
       cursorPosition = isCursorLeft
         ? `calc(50% - ${imageWidth / 2 + 5}px)`
@@ -349,7 +349,7 @@ class AdditorImage extends BlockEmbed {
 
     const cursor = this.domNode.querySelector('.cursor');
     const { width, height } = this.getImageRect();
-    const alignStyle = AdditorImage.getImageAlignedStatus();
+    const alignStyle = AdditorImage.getImageAlignedStatus(this.domNode.getAttribute('style'));
     cursor.style.left = AdditorImage.getVerticalBarPosition(alignStyle, isLeft, width);
     cursor.style.display = 'block';
     setTimeout(() => {
