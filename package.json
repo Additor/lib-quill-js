@@ -1,6 +1,6 @@
 {
   "name": "@additor/quill",
-  "version": "2.0.23",
+  "version": "2.1.0",
   "description": "Your powerful, rich text editor",
   "author": "Sungwoo Cho <sungwoo.cho@additor.io>",
   "homepage": "http://quilljs.com",
@@ -145,7 +145,7 @@
   },
   "scripts": {
     "build": "npm run build:webpack && sh move_bundle.sh",
-    "build-prod": "webpack --config _develop/webpack.config.js --env.minimize",
+    "build:prod": "webpack --config _develop/webpack.config.js --env.minimize",
     "build:webpack": "webpack --config _develop/webpack.config.js; rm dist/quill.core dist/quill.bubble dist/quill.snow",
     "build:release": "./_develop/scripts/release.sh",
     "lint": "eslint blots core formats modules themes ui test",
