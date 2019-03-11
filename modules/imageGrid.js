@@ -493,17 +493,19 @@ class ImageGrid extends Module {
       newImageData = newImageBlot;
     }
 
-    if (dropIndex === -1 && newImageBlot.domNode) {
+    if (dropIndex === -1) {
       this.insertImageToPrevLine(newImageData, targetBlot);
-      this.shrink(
-        newImageBlot.domNode.querySelector('img'),
-        () => {
-          newImageBlot.domNode.querySelector('.caption').style.display = 'none';
-        },
-        () => {
-          newImageBlot.remove();
-        },
-      );
+      if (newImageBlot.domNode) {
+        this.shrink(
+          newImageBlot.domNode.querySelector('img'),
+          () => {
+            newImageBlot.domNode.querySelector('.caption').style.display = 'none';
+          },
+          () => {
+            newImageBlot.remove();
+          },
+        );
+      }
       return;
     }
     nextTargetData.splice(dropIndex, 0, newImageData);
