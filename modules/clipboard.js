@@ -150,7 +150,7 @@ class Clipboard extends Module {
     setTimeout(() => {
       const imageBlots = this.quill.scroll.descendants(AdditorImage);
       _.forEach(imageBlots, blot => {
-        if (!blot.domNode.getAttribute('ratio')) {
+        if (!blot.domNode.getAttribute('ratio') || !blot.domNode.getAttribute('width')) {
           const { width, height } = blot.domNode.getElementsByTagName('img')[0];
           const ratio = width / height;
           const imageWidth =

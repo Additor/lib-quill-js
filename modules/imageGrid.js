@@ -478,7 +478,7 @@ class ImageGrid extends Module {
 
   insertImageToImageGrid(targetBlot, newImageBlot, dropIndex) {
     const prevTargetData = this.getDataFromImageGridBlot(targetBlot);
-    if (prevTargetData.length > 2) return;
+    if (prevTargetData.length > 2 && dropIndex > -1) return;
     const nextTargetData = [...prevTargetData];
 
     let newImageData;
