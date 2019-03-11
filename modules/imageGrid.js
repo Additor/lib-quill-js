@@ -161,13 +161,15 @@ class ImageGrid extends Module {
           const [afterLine] = this.quill.getLine(targetBlotIndex);
           setTimeout(() => {
             if (afterLine.statics.blotName === 'image') {
-              if (cursorOffset === 1) {
+              if (cursorOffset === 0) {
+                afterLine.showFakeCursor();
+              } else if (cursorOffset === 1) {
                 afterLine.showFakeCursor();
               } else if (cursorOffset === 2) {
                 afterLine.showFakeCursor(false);
               }
             } else if (afterLine.statics.blotName === 'image-grid') {
-              afterLine.showFakeCursor(cursorOffset - 1);
+              afterLine.showFakeCursor(cursorOffset);
             }
           }, 150);
         }
@@ -326,7 +328,7 @@ class ImageGrid extends Module {
             const originBlotIndex = this.quill.getIndex(originBlot);
             const originImageDeleteDelta = new Delta()
               .retain(originBlotIndex)
-              .delete(2);
+              .delete(1);
             this.quill.updateContents(originImageDeleteDelta, 'user');
             this.quill.setSelection(null);
           },
@@ -368,7 +370,7 @@ class ImageGrid extends Module {
           const originBlotIndex = this.quill.getIndex(originBlot);
           const originImageDeleteDelta = new Delta()
             .retain(originBlotIndex)
-            .delete(2);
+            .delete(1);
           this.quill.updateContents(originImageDeleteDelta, 'user');
         },
       );
@@ -440,7 +442,7 @@ class ImageGrid extends Module {
     const newImageGridOps = this.makeOperations(imageGridData);
     const imageGridDelta = new Delta()
       .retain(targetImageIndex)
-      .delete(2)
+      .delete(1)
       .insert(...newImageGridOps, {
         'created-data': {
           index: dropHelperIndex,
