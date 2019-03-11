@@ -246,9 +246,8 @@ class AdditorImage extends BlockEmbed {
                 dropHelper.style.height = `${height}px`;
               });
 
-              const imageWrapper = this.domNode.querySelector('.ql-img-wrapper');
-              imageWrapper.addEventListener('click', event => {
-                if (event.target === imageWrapper) {
+              this.domNode.addEventListener('click', event => {
+                if (event.target === this.domNode) {
                   const center = event.target.getBoundingClientRect().width / 2;
                   this.showFakeCursor(event.offsetX < center);
                 }
@@ -264,9 +263,8 @@ class AdditorImage extends BlockEmbed {
                 dropHelper.style.height = `${height}px`;
               });
 
-              const imageWrapper = this.domNode.querySelector('.ql-img-wrapper');
-              imageWrapper.addEventListener('click', event => {
-                if (event.target === imageWrapper) {
+              this.domNode.addEventListener('click', event => {
+                if (event.target === this.domNode) {
                   const center = event.target.getBoundingClientRect().width / 2;
                   this.showFakeCursor(event.offsetX < center);
                 }
@@ -313,11 +311,11 @@ class AdditorImage extends BlockEmbed {
   static getVerticalBarPosition(imageAlignStyle, isCursorLeft, imageWidth) {
     let cursorPosition = '';
     if (imageAlignStyle === 'left') {
-      cursorPosition = isCursorLeft ? `-5px` : `${imageWidth + 4}px`;
+      cursorPosition = isCursorLeft ? `0` : `${imageWidth + 4}px`;
     } else if (imageAlignStyle === 'right') {
       cursorPosition = isCursorLeft
         ? `calc(100% - ${imageWidth + 5}px)`
-        : `calc(100% + 4px)`;
+        : `calc(100% - 2px)`;
     } else {
       cursorPosition = isCursorLeft
         ? `calc(50% - ${imageWidth / 2 + 5}px)`
