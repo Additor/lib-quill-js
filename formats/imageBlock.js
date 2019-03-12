@@ -80,7 +80,7 @@ class AdditorImage extends BlockEmbed {
     captionInput.setAttribute('spellcheck', 'false');
     captionInput.classList.add('caption');
     if (isDisabled()) {
-      captionInput.setAttribute('readonly', true);
+      captionInput.setAttribute('contenteditable', 'false');
     } else {
       captionInput.setAttribute('placeholder', 'Write a caption');
     }

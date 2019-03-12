@@ -120,7 +120,7 @@ class ImageGrid extends BlockEmbed {
       captionElement.setAttribute('spellcheck', 'false');
       captionElement.classList.add('caption');
       if (isDisabled()) {
-        captionElement.setAttribute('readonly', true);
+        captionElement.setAttribute('contenteditable', 'false');
       } else {
         captionElement.setAttribute('placeholder', 'Write a caption');
       }
