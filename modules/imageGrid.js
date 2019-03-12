@@ -615,8 +615,7 @@ class ImageGrid extends Module {
       updateDelta
         .retain(originBlotIndex)
         .delete(1)
-        .insert(...nextOriginOps)
-        .insert('\n');
+        .insert(...nextOriginOps);
       this.quill.updateContents(updateDelta, 'user');
     } else {
       this.quill.formatText(
