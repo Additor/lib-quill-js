@@ -246,12 +246,14 @@ class AdditorImage extends BlockEmbed {
                 dropHelper.style.height = `${height}px`;
               });
 
-              this.domNode.addEventListener('click', event => {
-                if (event.target === this.domNode) {
-                  const center = event.target.getBoundingClientRect().width / 2;
-                  this.showFakeCursor(event.offsetX < center);
-                }
-              });
+              if (this.scroll.isEnabled && this.scroll.isEnabled()) {
+                this.domNode.addEventListener('click', event => {
+                  if (event.target === this.domNode) {
+                    const center = event.target.getBoundingClientRect().width / 2;
+                    this.showFakeCursor(event.offsetX < center);
+                  }
+                });
+              }
             }
           } else if (name === 'ratio') { // DomNode, event, listener를 받아서 처리하는 함수로 만들 수 있을 듯..
             const { width: imageWidth } = this.formats();
@@ -263,12 +265,14 @@ class AdditorImage extends BlockEmbed {
                 dropHelper.style.height = `${height}px`;
               });
 
-              this.domNode.addEventListener('click', event => {
-                if (event.target === this.domNode) {
-                  const center = event.target.getBoundingClientRect().width / 2;
-                  this.showFakeCursor(event.offsetX < center);
-                }
-              });
+              if (this.scroll.isEnabled && this.scroll.isEnabled()) {
+                this.domNode.addEventListener('click', event => {
+                  if (event.target === this.domNode) {
+                    const center = event.target.getBoundingClientRect().width / 2;
+                    this.showFakeCursor(event.offsetX < center);
+                  }
+                });
+              }
             }
           }
         } else {
@@ -339,6 +343,7 @@ class AdditorImage extends BlockEmbed {
   }
 
   showFakeCursor(isLeft = true) {
+    if (!this.scroll.isEnabled()) return;
     const imageGrids = this.scroll.descendants(ImageGrid);
     _.forEach(imageGrids, imageGrid => imageGrid.hideFakeCursor());
 

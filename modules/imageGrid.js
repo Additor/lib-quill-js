@@ -383,27 +383,29 @@ class ImageGrid extends Module {
       if (dropHelperIndex === -1) {
         this.insertImageToPrevLine(removedItem, targetImageBlot);
 
-        const originBlotIndex = this.quill.getIndex(originBlot);
-        if (nextOriginData.length === 1) {
-          // image-grid -> image blot 변경됨
-          const nextOriginOps = this.makeOperations(nextOriginData);
-          const originImageDeleteDelta = new Delta()
-            .retain(originBlotIndex)
-            .delete(1)
-            .insert(...nextOriginOps);
-          this.quill.updateContents(originImageDeleteDelta, 'user');
-          this.quill.setSelection(null);
-        } else {
-          this.quill.formatText(
-            originBlotIndex,
-            1,
-            'remove-data',
-            {
-              index: originIndexInBlot,
-              data: nextOriginData,
-            },
-            'user',
-          );
+        if (originBlot.scroll === targetImageBlot.scroll) {
+          const originBlotIndex = this.quill.getIndex(originBlot);
+          if (nextOriginData.length === 1) {
+            // image-grid -> image blot 변경됨
+            const nextOriginOps = this.makeOperations(nextOriginData);
+            const originImageDeleteDelta = new Delta()
+              .retain(originBlotIndex)
+              .delete(1)
+              .insert(...nextOriginOps);
+            this.quill.updateContents(originImageDeleteDelta, 'user');
+            this.quill.setSelection(null);
+          } else {
+            this.quill.formatText(
+              originBlotIndex,
+              1,
+              'remove-data',
+              {
+                index: originIndexInBlot,
+                data: nextOriginData,
+              },
+              'user',
+            );
+          }
         }
         return;
       } else if (dropHelperIndex === 0) {

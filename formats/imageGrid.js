@@ -193,7 +193,7 @@ class ImageGrid extends BlockEmbed {
 
   value() {
     const imageGridItemWrapper = this.domNode.querySelector('.image-grid-item-wrapper');
-    if (!imageGridItemWrapper.onclick) {
+    if (!imageGridItemWrapper.onclick && this.scroll.isEnabled()) {
       imageGridItemWrapper.onclick = event => {
         if (event.target === imageGridItemWrapper) {
           const sections = [];
@@ -355,6 +355,7 @@ class ImageGrid extends BlockEmbed {
   }
 
   showFakeCursor(index = 0) {
+    if (!this.scroll.isEnabled()) return;
     const imageGrids = this.scroll.descendants(ImageGrid);
     _.forEach(imageGrids, imageGrid => imageGrid.hideFakeCursor());
 
