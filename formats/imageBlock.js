@@ -61,12 +61,13 @@ class AdditorImage extends BlockEmbed {
       } else if ((ev.metaKey || ev.ctrlKey) && ev.keyCode === 65) {
         // 전체선택 (Ctrl or Cmd + A)
         ev.preventDefault();
+        ev.stopPropagation();
         if (window.getSelection) {
           const selected = window.getSelection();
-          selected.selectAllChildren(ev.target);
+          selected.selectAllChildren(captionInput);
         } else if (document.body.createTextRange) {
           const range = document.body.createTextRange();
-          range.moveToElementText(ev.target);
+          range.moveToElementText(captionInput);
           range.select();
         }
       } else {
@@ -209,6 +210,24 @@ class AdditorImage extends BlockEmbed {
     }, {});
   }
 
+  setDropHelperHeight(height) {
+    const dropHelpers = this.domNode.querySelectorAll('.image-drop-helper');
+    dropHelpers.forEach(dropHelper => {
+      dropHelper.style.height = `${height}px`;
+    });
+  }
+
+  setImageBoundClickHandler() {
+    if (this.scroll.isEnabled && this.scroll.isEnabled()) {
+      this.domNode.addEventListener('click', event => {
+        if (event.target === this.domNode) {
+          const center = event.target.getBoundingClientRect().width / 2;
+          this.showFakeCursor(event.offsetX < center);
+        }
+      });
+    }
+  }
+
   format(name, value) {
     if (ImageFormatAttributesList.indexOf(name) > -1) {
       if (name === 'create-animation') {
@@ -247,40 +266,16 @@ class AdditorImage extends BlockEmbed {
           if (name === 'width') {
             const { ratio } = this.formats();
             if (ratio) {
-              const dropHelpers = this.domNode.querySelectorAll('.image-drop-helper');
-              const width = Number(value);
-              const height = width / ratio;
-              dropHelpers.forEach(dropHelper => {
-                dropHelper.style.height = `${height}px`;
-              });
-
-              if (this.scroll.isEnabled && this.scroll.isEnabled()) {
-                this.domNode.addEventListener('click', event => {
-                  if (event.target === this.domNode) {
-                    const center = event.target.getBoundingClientRect().width / 2;
-                    this.showFakeCursor(event.offsetX < center);
-                  }
-                });
-              }
+              const height = Number(value) / ratio;
+              this.setDropHelperHeight(height);
+              this.setImageBoundClickHandler();
             }
           } else if (name === 'ratio') { // DomNode, event, listener를 받아서 처리하는 함수로 만들 수 있을 듯..
-            const { width: imageWidth } = this.formats();
-            if (imageWidth) {
-              const dropHelpers = this.domNode.querySelectorAll('.image-drop-helper');
-              const width = Number(imageWidth);
-              const height = width / value;
-              dropHelpers.forEach(dropHelper => {
-                dropHelper.style.height = `${height}px`;
-              });
-
-              if (this.scroll.isEnabled && this.scroll.isEnabled()) {
-                this.domNode.addEventListener('click', event => {
-                  if (event.target === this.domNode) {
-                    const center = event.target.getBoundingClientRect().width / 2;
-                    this.showFakeCursor(event.offsetX < center);
-                  }
-                });
-              }
+            const { width } = this.formats();
+            if (width) {
+              const height = Number(width) / value;
+              this.setDropHelperHeight(height);
+              this.setImageBoundClickHandler();
             }
           }
         } else {
