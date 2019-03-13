@@ -51,9 +51,6 @@ class AdditorImage extends BlockEmbed {
 
     const captionInput = document.createElement('SPAN');
     captionInput.setAttribute('contenteditable', 'true');
-    captionInput.addEventListener('mousedown', ev => {
-      ev.stopPropagation();
-    });
     captionInput.addEventListener('click', ev => {
       ev.stopPropagation();
     });
