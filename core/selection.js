@@ -179,9 +179,17 @@ class Selection {
     const selection = document.getSelection();
     if (
       selection == null ||
-      selection.rangeCount <= 0 ||
+      selection.rangeCount <= 0
+    ) return null;
+
+    if (
+      (
+        selection.anchorNode.classList &&
+        selection.anchorNode.classList.contains('caption')
+      ) ||
       selection.anchorNode.parentNode.classList.contains('caption')
     ) return null;
+
     const nativeRange = selection.getRangeAt(0);
     if (nativeRange == null) return null;
     const range = this.normalizeNative(nativeRange);

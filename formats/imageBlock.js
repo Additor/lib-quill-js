@@ -65,10 +65,6 @@ class AdditorImage extends BlockEmbed {
         if (window.getSelection) {
           const selected = window.getSelection();
           selected.selectAllChildren(captionInput);
-        } else if (document.body.createTextRange) {
-          const range = document.body.createTextRange();
-          range.moveToElementText(captionInput);
-          range.select();
         }
       } else {
         ev.stopPropagation();
