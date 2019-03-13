@@ -17,6 +17,7 @@ class ImageGrid extends BlockEmbed {
   }
 
   static create(value) {
+    // FIXME: format 함수 안 add-data 분기의 내용과 중복되는 것이 많음. refactoring 필요함
     const node = super.create();
     const { data } = value;
     node.setAttribute('image-grid-data', JSON.stringify(data));
@@ -263,6 +264,7 @@ class ImageGrid extends BlockEmbed {
 
   format(format, value) {
     if (format === 'created-data') {
+      // 이미지에서 이미지그리드로 변경될 때 사용자가 dnd한 이미지가 추가되는 듯한 animation 적용을 위해 formatText('create-data', ...)를 사용한다.
       const { index: newImageIndex, animation } = value;
       const imageGridItemWrapper = this.domNode.querySelector('.image-grid-item-wrapper');
       const animationTarget = imageGridItemWrapper.querySelectorAll(`.image-grid-item-container`)[newImageIndex];
@@ -271,6 +273,8 @@ class ImageGrid extends BlockEmbed {
       });
       animationTarget.classList.add(animation);
     } else if (format === 'add-data') {
+      // 이미지그리드에 새로운 이미지를 추가할 때 animation 적용을 위해 formatText('add-data', ...)를 사용한다.
+      // FIXME: static create 함수 안의 내용과 중복되는 것이 많음(거의 비슷함). refactoring 필요함
       const { data: nextData } = value;
       let { index: dropIndex } = value;
       if (dropIndex === MAX_IMAGE_LENGTH) {
@@ -402,6 +406,7 @@ class ImageGrid extends BlockEmbed {
       this.domNode.setAttribute('image-grid-data', JSON.stringify(nextData));
       return;
     } else if (format === 'remove-data') {
+      // 이미지그리드에서 이미지를 제거할 때 animation 적용을 위해 formatText('remove-data', ...)를 사용한다.
       const { data: nextData, index: removeIndex } = value;
       const sumOfRatios = nextData.reduce((accumulator, { attributes: { ratio } }) => accumulator + Number(ratio), 0);
 

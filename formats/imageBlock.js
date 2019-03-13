@@ -24,7 +24,6 @@ class AdditorImage extends BlockEmbed {
   static create(value) {
     const node = super.create(value);
 
-    // image
     node.setAttribute(
       'id',
       `img_${Math.random()
@@ -325,6 +324,10 @@ class AdditorImage extends BlockEmbed {
     }
   }
 
+  /**
+   * 이미지 사이즈 찾기
+   * @return {Object} { width, height }
+   */
   getImageRect() {
     const { width: imageWidth, ratio } = this.formats();
     const width = Number(imageWidth);
@@ -333,6 +336,13 @@ class AdditorImage extends BlockEmbed {
     return { width, height };
   }
 
+  /**
+   * 커서 또는 드래그앤드롭 가이드라인의 위치를 찾는다
+   * @param {String} imageAlignStyle [ 'left' | 'right' | '' ]
+   * @param {Boolean} isCursorLeft []
+   * @param {Number} imageWidth 현재 이미지의 너비
+   * @return {String} '**px'
+   */
   static getVerticalBarPosition(imageAlignStyle, isCursorLeft, imageWidth) {
     let cursorPosition = '';
     if (imageAlignStyle === 'left') {
@@ -349,6 +359,11 @@ class AdditorImage extends BlockEmbed {
     return cursorPosition;
   }
 
+  /**
+   * align 상태가 어떤지 찾는다
+   * @param {String} styles 해당 blot의 style attribute값
+   * @return {String} '' | 'left' | 'right'
+   */
   static getImageAlignedStatus(styles) {
     let alignStyle = '';
     if (styles) {
@@ -363,6 +378,10 @@ class AdditorImage extends BlockEmbed {
     return alignStyle;
   }
 
+  /**
+   * fakeCursor를 표현한다.
+   * @param {Boolean} isLeft fake cursor를 표현할 위치를 정한다. true이면 왼쪽 false이면 오른쪽
+   */
   showFakeCursor(isLeft = true) {
     if (!this.scroll.isEnabled()) return;
     const imageGrids = this.scroll.descendants(ImageGrid);
@@ -401,6 +420,10 @@ class AdditorImage extends BlockEmbed {
     this.scroll.emitter.emit(Emitter.events.IMAGE_GRID_FOCUS, undefined);
   }
 
+  /**
+   * 사용자가 이미지를 드래그하는 중일 때 dragover target 이미지의 drop helper를 보여줌
+   * @param {Boolean} disableVerticalGuideline 세로 드롭헬퍼를 표현하지 않는 경우 true
+   */
   showDropHelper(disableVerticalGuideline) {
     if (
       this.domNode.style.float === 'left' ||

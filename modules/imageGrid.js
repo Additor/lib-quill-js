@@ -38,7 +38,7 @@ class ImageGrid extends Module {
     const quillLength = this.quill.getLength();
     let prevented = false;
     switch (ev.keyCode) {
-      // TODO: shift selection 처리 필요
+      // TODO: (shift + arrow*)일때 selection 처리 필요
       case 37: // arrow left
         if (cursorOffset === 0) {
           if (imageGridIndex > 0) {
@@ -241,6 +241,10 @@ class ImageGrid extends Module {
     }
   }
 
+  /**
+   * delta의 insert 함수 안에 들어갈 값을 만든다.
+   * @param {object} images 이미지그리드의 data에 들어가는 이미지 배열 데이터 [{ image: 'https://some.src.here', attribute: { caption: '', ratio: '', width: '' }}, ...]
+   */
   makeOperations(images) {
     const ops = [];
     if (images.length === 1) {
@@ -258,6 +262,10 @@ class ImageGrid extends Module {
     return ops;
   }
 
+  /**
+   * image-grid로부터 data를 가져옴
+   * @param {Object} imageGridBlot data를 가져오고 싶은 image-grid blot
+   */
   getDataFromImageGridBlot(imageGridBlot) {
     const {
       'image-grid': { data },
@@ -265,6 +273,11 @@ class ImageGrid extends Module {
     return data;
   }
 
+  /**
+   * 해당 블롯 바로 위에 이미지 추가(image blot을 추가함)
+   * @param {Object} imageData insert할 이미지의 데이터. { image: url, attributes: { caption: '', width: '', ratio: '' }}
+   * @param {Object} targetBlot retain index를 찾기 위한 target blot
+   */
   insertImageToPrevLine(imageData, targetBlot) {
     const index = this.quill.getIndex(targetBlot);
     const {
@@ -301,6 +314,14 @@ class ImageGrid extends Module {
     targetNode.classList.add('fade-out-and-scale-down');
   }
 
+  /**
+   * 이미지그리드를 새로 추가함. (from image to image) or (from image-grid to image)
+   * @param {Object} originBlot 원래 이미지가 들어있던 blot. image 또는 image-grid.
+   * @param {Number} originIndexInBlot image-grid에서 꺼내온 경우 이미지가 원래 가지고있던 index
+   * @param {Object} targetImageBlot drop target blot
+   * @param {Number} dropHelperIndex drop target blot에 들어가야 할 위치 index.
+   *                                  -1이면 해당 블롯 위에 추가되고, 이미지일때: ( 0: 왼쪽, 1: 오른쪽 ); 이미지그리드일때: ( 0: 맨왼쪽, 1: 한칸뒤, 2: 두칸뒤, 3:세칸뒤)
+   */
   insertImageGrid(originBlot, originIndexInBlot, targetImageBlot, dropHelperIndex) {
     let imageGridData = null; // TODO: dropHelperIndex === -1 일때 노드 추가하면서 delete1 해야하는 이유가 뭘까 확인해보기
     if (originBlot.statics.blotName === 'image') {
@@ -452,6 +473,10 @@ class ImageGrid extends Module {
     this.forceComponentUpdateAfterTransition();
   }
 
+  /**
+   * 이미지그리드를 쪼갠다 (image-grid) -> (image | image-grid) or (image-grid | image)
+   * @param {Number} splitCursorIndex 이미지그리드를 쪼갤 기준 index
+   */
   splitImageGrid(splitCursorIndex) {
     const { blot } = this.imageGridFocusData;
     this.imageGridFocusData = null;
@@ -537,6 +562,12 @@ class ImageGrid extends Module {
     this.forceComponentUpdateAfterTransition();
   }
 
+  /**
+   * 이미지그리드의 순서 변경
+   * @param {Objet} targetBlot 순서를 변경해줄 imageGrid blot
+   * @param {Number} originItemIndex 현재 사용자가 이동하고자 하는 이미지의 원래 index
+   * @param {Number} dropIndex 이미지가 들어가야 할 index
+   */
   changeImageSquence(targetBlot, originItemIndex, dropIndex) {
     if (dropIndex === -1) {
       const prevTargetData = this.getDataFromImageGridBlot(targetBlot);
@@ -604,7 +635,13 @@ class ImageGrid extends Module {
     this.quill.updateContents(updateDelta, 'user-comment');
   }
 
-  // grid-grid, grid-text
+  /**
+   * 이미지그리드에서 이미지를 제거 (only remove, move from image-grid to image-grid, move from image-grid to block(text));
+   * @param {Object} originBlot 사용자가 드래그를 시작한 이미지가 들어있는 blot. 항상 'image-grid'이다.
+   * @param {Number} originIndexInBlot 드래그한 이미지가 소속되어있던 그리드 내에서 해당 이미지가 가지는 인덱스.
+   * @param {Object} targetBlot 드롭한 타겟 blot. 'image-grid'이거나 'block'(일반 텍스트)이다. (없는 경우도 있음: 키보드의 backspace 혹은 delete를 통해 그리드 내에서 이미지를 지우는 경우)
+   * @param {Number} targetIndexInBlot 드롭한 타겟이 'image-grid' blot일 경우 이미지가 들어갈 index
+   */
   removeImageFromImageGrid(originBlot, originIndexInBlot, targetBlot, targetIndexInBlot) {
     const prevOriginData = this.getDataFromImageGridBlot(originBlot);
     const nextOriginData = [...prevOriginData];
@@ -667,7 +704,7 @@ class ImageGrid extends Module {
   }
 
   /**
-   * drop되었을 때 호출되는 함수
+   * drop되었을 때 호출되는 함수. Web-Frontend-Main 코드에서 호출한다.
    * @param {object} originBlotInfo
    * @param {object} targetBlotInfo
    */
@@ -689,11 +726,12 @@ class ImageGrid extends Module {
     } else if (targetBlot.statics.blotName === 'image') {
       this.insertImageGrid(originBlot, originIndexInGrid, targetBlot, targetIndexInGrid);
     } else {
+      // FIXME: 타겟이 image도, imageGrid도 아닌경우 지금은 Web-Frontend-Main에서 처리하는 것('image'에서 dnd시작)도 있고, 여기서 처리하는 것('image-grid'에서 dnd시작)데, 그걸 여기로 가져오는게 깔끔할 듯 하다...
       if (originBlot.statics.blotName === 'image-grid') {
         this.removeImageFromImageGrid(originBlot, originIndexInGrid, targetBlot);
       } else if (originBlot.statics.blotName === 'image') {
         // 현재 이미지그리드에서 다른 텍스트라인으로 이동할때만 호출해서 여기로 들어올 일이 없음
-        console.log('그냥 예전처럼 이동시켜줘 ')
+        console.log('그냥 예전처럼 이동시켜줘')
       }
     }
   }
