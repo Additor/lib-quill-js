@@ -61,6 +61,17 @@ class AdditorImage extends BlockEmbed {
       // Enter, Tab, Escape
       if (ev.keyCode === 13 || ev.keyCode === 9 || ev.keyCode === 27) {
         ev.preventDefault();
+      } else if ((ev.metaKey || ev.ctrlKey) && ev.keyCode === 65) {
+        // 전체선택 (Ctrl or Cmd + A)
+        ev.preventDefault();
+        if (window.getSelection) {
+          const selected = window.getSelection();
+          selected.selectAllChildren(ev.target);
+        } else if (document.body.createTextRange) {
+          const range = document.body.createTextRange();
+          range.moveToElementText(ev.target);
+          range.select();
+        }
       } else {
         ev.stopPropagation();
       }
