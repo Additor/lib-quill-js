@@ -132,6 +132,18 @@ class ImageGrid extends BlockEmbed {
         // Enter, Tab, Escape
         if (ev.keyCode === 13 || ev.keyCode === 9 || ev.keyCode === 27) {
           ev.preventDefault();
+        } else if ((ev.metaKey || ev.ctrlKey) && ev.keyCode === 65) {
+          // 전체선택 (Ctrl or Cmd + A)
+          ev.preventDefault();
+          ev.stopPropagation();
+          if (window.getSelection) {
+            const selected = window.getSelection();
+            selected.selectAllChildren(captionElement);
+          } else if (document.body.createTextRange) {
+            const range = document.body.createTextRange();
+            range.moveToElementText(captionElement);
+            range.select();
+          }
         } else {
           ev.stopPropagation();
         }
