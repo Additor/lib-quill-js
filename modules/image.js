@@ -133,7 +133,9 @@ class Image extends Module {
               .delete(1),
             Quill.sources.USER,
           );
-          this.quill.setSelection(imageIndex, Quill.sources.SILENT);
+          setTimeout(() => {
+            this.quill.setSelection(imageIndex, Quill.sources.SILENT);
+          });
         } else {
           if (imageLastIndex < quillLength) {
             const [line] = this.quill.getLine(imageIndex + 1);
