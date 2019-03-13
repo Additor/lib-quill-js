@@ -129,8 +129,30 @@ class ImageGrid extends BlockEmbed {
         ev.stopPropagation();
       });
       captionElement.addEventListener('keydown', ev => {
-        // Enter, Tab, Escape
-        if (ev.keyCode === 13 || ev.keyCode === 9 || ev.keyCode === 27) {
+        if (ev.keyCode === 37) {
+          // ArrowLeft
+          if (window.getSelection) {
+            const selected = window.getSelection();
+            if (selected.isCollapsed && selected.focusOffset === 0) {
+              ev.preventDefault();
+              ev.stopPropagation();
+            }
+          }
+        } else if (ev.keyCode === 39) {
+          // ArrowRight
+          if (window.getSelection) {
+            const selected = window.getSelection();
+            if (selected.isCollapsed && selected.focusOffset === selected.focusNode.length) {
+              ev.preventDefault();
+              ev.stopPropagation();
+            }
+          }
+        } else if (ev.keyCode === 38 || ev.keyCode === 40) {
+          // ArrowUp or ArrowDown
+          ev.preventDefault();
+          ev.stopPropagation();
+        } else if (ev.keyCode === 13 || ev.keyCode === 9 || ev.keyCode === 27) {
+          // Enter, Tab, Escape
           ev.preventDefault();
         } else if ((ev.metaKey || ev.ctrlKey) && ev.keyCode === 65) {
           // 전체선택 (Ctrl or Cmd + A)
@@ -299,11 +321,44 @@ class ImageGrid extends BlockEmbed {
         ev.stopPropagation();
       });
       captionElement.addEventListener('keydown', ev => {
-        // Enter, Tab, Escape
-        if (ev.keyCode === 13 || ev.keyCode === 9 || ev.keyCode === 27) {
+        if (ev.keyCode === 37) {
+          // ArrowLeft
+          if (window.getSelection) {
+            const selected = window.getSelection();
+            if (selected.isCollapsed && selected.focusOffset === 0) {
+              ev.preventDefault();
+              ev.stopPropagation();
+            }
+          }
+        } else if (ev.keyCode === 39) {
+          // ArrowRight
+          if (window.getSelection) {
+            const selected = window.getSelection();
+            if (selected.isCollapsed && selected.focusOffset === selected.focusNode.length) {
+              ev.preventDefault();
+              ev.stopPropagation();
+            }
+          }
+        } else if (ev.keyCode === 38 || ev.keyCode === 40) {
+          // ArrowUp or ArrowDown
           ev.preventDefault();
+          ev.stopPropagation();
+        } else if (ev.keyCode === 13 || ev.keyCode === 9 || ev.keyCode === 27) {
+          // Enter, Tab, Escape
+          ev.preventDefault();
+        } else if ((ev.metaKey || ev.ctrlKey) && ev.keyCode === 65) {
+          // 전체선택 (Ctrl or Cmd + A)
+          ev.preventDefault();
+          ev.stopPropagation();
+          if (window.getSelection) {
+            const selected = window.getSelection();
+            selected.selectAllChildren(captionElement);
+          } else if (document.body.createTextRange) {
+            const range = document.body.createTextRange();
+            range.moveToElementText(captionElement);
+            range.select();
+          }
         } else {
-          // ctrl, cmd, shift, alt, metaKey, backspace, delete 아닌경우, 40자 이상이면 ev.preventDefault();
           ev.stopPropagation();
         }
       });

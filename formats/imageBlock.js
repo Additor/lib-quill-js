@@ -55,8 +55,30 @@ class AdditorImage extends BlockEmbed {
       ev.stopPropagation();
     });
     captionInput.addEventListener('keydown', ev => {
-      // Enter, Tab, Escape
-      if (ev.keyCode === 13 || ev.keyCode === 9 || ev.keyCode === 27) {
+      if (ev.keyCode === 37) {
+        // ArrowLeft
+        if (window.getSelection) {
+          const selected = window.getSelection();
+          if (selected.isCollapsed && selected.focusOffset === 0) {
+            ev.preventDefault();
+            ev.stopPropagation();
+          }
+        }
+      } else if (ev.keyCode === 39) {
+        // ArrowRight
+        if (window.getSelection) {
+          const selected = window.getSelection();
+          if (selected.isCollapsed && selected.focusOffset === selected.focusNode.length) {
+            ev.preventDefault();
+            ev.stopPropagation();
+          }
+        }
+      } else if (ev.keyCode === 38 || ev.keyCode === 40) {
+        // ArrowUp or ArrowDown
+        ev.preventDefault();
+        ev.stopPropagation();
+      } else if (ev.keyCode === 13 || ev.keyCode === 9 || ev.keyCode === 27) {
+        // Enter, Tab, Escape 캡션에서의 keydown 처리는 Web-Frontend-Main 코드에서 한다
         ev.preventDefault();
       } else if ((ev.metaKey || ev.ctrlKey) && ev.keyCode === 65) {
         // 전체선택 (Ctrl or Cmd + A)
