@@ -238,11 +238,32 @@ class Clipboard extends Module {
   onPaste(e, range) {
     const html = e.clipboardData.getData('text/html');
     const text = e.clipboardData.getData('text/plain');
+
+    // //???
+    // console.log(html);
+    // console.log(text);
+
+    // eslint-disable-next-line prefer-destructuring
+    const items = e.clipboardData.items;
+    const blobs = [];
+    // eslint-disable-next-line no-plusplus
+    for (let i = 0; i < items.length; i++) {
+      blobs.push(items[i].getAsFile());
+    }
+    // console.log(e.clipboardData.items);
+    // console.log(e.clipboardData.files);
+
+    // TODO: clipboard 붙여넣기 파일업로드 해야함
+    // text/plain: text붙여넣기
+    // text/html: src찾아서 이미지 다운 -> s3에 업로드 -> 애디터링크 가져옴
+    // file(image/*): blob이면 파일정보를 s3에 업로드 -> 애디터링크 가져옴
+
     // const files = Array.from(e.clipboardData.files || []);
     // if (!html && files.length > 0) {
     //   this.quill.uploader.upload(range, files);
     //   return;
     // }
+
     const formats = this.quill.getFormat(range.index);
     const pastedDelta = this.convert({ text, html }, formats);
     debug.log('onPaste', pastedDelta, { text, html });

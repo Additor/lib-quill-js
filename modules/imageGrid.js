@@ -110,7 +110,6 @@ class ImageGrid extends Module {
         } else if (cursorOffset === 0) {
           const delta = new Delta().retain(imageGridIndex).insert('\n');
           this.quill.updateContents(delta, 'user');
-          this.quill.component.forceUpdate();
         } else {
           this.splitImageGrid(cursorOffset);
         }
@@ -125,7 +124,6 @@ class ImageGrid extends Module {
             } else {
               this.quill.setSelection(imageGridIndex - 1, 0, Quill.sources.USER);
             }
-            this.quill.component.forceUpdate();
           }
         } else {
           const targetBlotIndex = this.quill.getIndex(blot);
@@ -470,7 +468,7 @@ class ImageGrid extends Module {
         },
       });
     this.quill.updateContents(imageGridDelta, 'user');
-    this.forceComponentUpdateAfterTransition();
+    // this.forceComponentUpdateAfterTransition();
   }
 
   /**
@@ -500,7 +498,7 @@ class ImageGrid extends Module {
 
     this.quill.updateContents(updateDelta, 'user');
     this.quill.setSelection(originImageGridIndex + 1, 0, Quill.sources.USER);
-    this.forceComponentUpdateAfterTransition();
+    // this.forceComponentUpdateAfterTransition();
   }
 
   insertImageToImageGrid(targetBlot, newImageBlot, dropIndex) {
@@ -559,7 +557,7 @@ class ImageGrid extends Module {
         },
       );
     }
-    this.forceComponentUpdateAfterTransition();
+    // this.forceComponentUpdateAfterTransition();
   }
 
   /**
@@ -742,11 +740,11 @@ class ImageGrid extends Module {
     });
   }
 
-  forceComponentUpdateAfterTransition() {
-    setTimeout(() => {
-      this.quill.component.forceUpdate();
-    }, 300);
-  }
+  // forceComponentUpdateAfterTransition() {
+  //   setTimeout(() => {
+  //     // this.quill.component.forceUpdate();
+  //   }, 300);
+  // }
 }
 
 export default ImageGrid;

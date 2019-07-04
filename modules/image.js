@@ -98,7 +98,6 @@ class Image extends Module {
         if (cursorOffset === 0) {
           const delta = new Delta().retain(imageIndex).insert('\n');
           this.quill.updateContents(delta, 'user');
-          this.quill.component.forceUpdate();
         } else {
           const delta = new Delta().retain(imageLastIndex).insert('\n');
           this.quill.updateContents(delta, 'user');
@@ -115,7 +114,6 @@ class Image extends Module {
             } else {
               this.quill.setSelection(imageIndex - 1, 0, Quill.sources.USER);
             }
-            this.quill.component.forceUpdate();
           }
         } else {
           blot.remove();
