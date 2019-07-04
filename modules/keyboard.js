@@ -503,7 +503,7 @@ Keyboard.DEFAULTS = {
           ) {
             const tableWrapper = currLine.tableWrapper();
             tableWrapper.showFakeCursor();
-            this.quill.setSelection(null);
+            this.quill.getModule('noteComponentHandle').hideMenuButton();
             return false;
           }
         } else {
@@ -511,19 +511,19 @@ Keyboard.DEFAULTS = {
           if (prevLine.statics.blotName === 'table') {
             const tableWrapper = prevLine.tableWrapper();
             tableWrapper.showFakeCursor(false);
-            this.quill.setSelection(null);
+            this.quill.getModule('noteComponentHandle').hideMenuButton();
             return false;
           }
 
           if (prevLine.statics.blotName === 'image-grid') {
             prevLine.showFakeCursor(-1);
-            this.quill.setSelection(null);
+            this.quill.getModule('noteComponentHandle').hideMenuButton();
             return false;
           }
 
           if (prevLine.statics.blotName === 'image') {
             prevLine.showFakeCursor(false);
-            this.quill.setSelection(null);
+            this.quill.getModule('noteComponentHandle').hideMenuButton();
             return false;
           }
         }
@@ -546,6 +546,7 @@ Keyboard.DEFAULTS = {
           ) {
             const tableWrapper = currLine.tableWrapper();
             tableWrapper.showFakeCursor(false);
+            this.quill.getModule('noteComponentHandle').hideMenuButton();
             return false;
           }
         } else {
@@ -553,19 +554,19 @@ Keyboard.DEFAULTS = {
           if (nextLine.statics.blotName === 'table') {
             const tableWrapper = nextLine.tableWrapper();
             tableWrapper.showFakeCursor();
-            this.quill.setSelection(null);
+            this.quill.getModule('noteComponentHandle').hideMenuButton();
             return false;
           }
 
           if (nextLine.statics.blotName === 'image-grid') {
             nextLine.showFakeCursor();
-            this.quill.setSelection(null);
+            this.quill.getModule('noteComponentHandle').hideMenuButton();
             return false;
           }
 
           if (nextLine.statics.blotName === 'image') {
             nextLine.showFakeCursor();
-            this.quill.setSelection(null);
+            this.quill.getModule('noteComponentHandle').hideMenuButton();
             return false;
           }
         }
@@ -590,13 +591,13 @@ Keyboard.DEFAULTS = {
         if (prev) {
           if (prev.statics.blotName === 'image-grid') {
             prev.showFakeCursor();
-            this.quill.setSelection(null);
+            this.quill.getModule('noteComponentHandle').hideMenuButton();
             return false;
           }
 
           if (prev.statics.blotName === 'image') {
             prev.showFakeCursor();
-            this.quill.setSelection(null);
+            this.quill.getModule('noteComponentHandle').hideMenuButton();
             return false;
           }
         }
@@ -610,13 +611,13 @@ Keyboard.DEFAULTS = {
         if (next) {
           if (next.statics.blotName === 'image-grid') {
             next.showFakeCursor();
-            this.quill.setSelection(null);
+            this.quill.getModule('noteComponentHandle').hideMenuButton();
             return false;
           }
 
           if (next.statics.blotName === 'image') {
             next.showFakeCursor();
-            this.quill.setSelection(null);
+            this.quill.getModule('noteComponentHandle').hideMenuButton();
             return false;
           }
         }
@@ -632,7 +633,7 @@ Keyboard.DEFAULTS = {
           if (prevLine.statics.blotName === 'table') {
             const tableWrapper = prevLine.tableWrapper();
             tableWrapper.showFakeCursor(false);
-            this.quill.setSelection(null);
+            this.quill.getModule('noteComponentHandle').hideMenuButton();
             if (context.line.length() === 1) {
               context.line.remove();
             }
@@ -641,7 +642,7 @@ Keyboard.DEFAULTS = {
 
           if (prevLine.statics.blotName === 'image-grid') {
             prevLine.showFakeCursor(-1);
-            this.quill.setSelection(null);
+            this.quill.getModule('noteComponentHandle').hideMenuButton();
             if (context.line.length() === 1) {
               context.line.remove();
             }
@@ -650,7 +651,7 @@ Keyboard.DEFAULTS = {
 
           if (prevLine.statics.blotName === 'image') {
             prevLine.showFakeCursor(false);
-            this.quill.setSelection(null);
+            this.quill.getModule('noteComponentHandle').hideMenuButton();
             if (context.line.length() === 1) {
               context.line.remove();
             }
@@ -804,7 +805,7 @@ function makeEmbedArrowHandler(key, shiftKey) {
       if (!(leaf instanceof EmbedBlot)) return true;
       if (leaf instanceof AdditorImage) {
         leaf.showFakeCursor(false);
-        this.quill.setSelection(null);
+        this.quill.getModule('noteComponentHandle').hideMenuButton();
         return false;
       }
 
